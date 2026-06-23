@@ -1,0 +1,283 @@
+dev_mode_functional_spec:
+  module: Developer Mode — Questions, Scoring, Content
+  version: "2.0.0"
+
+# ─────────────────────────────────────────────
+# DEVELOPER QUIZ QUESTIONS
+# ─────────────────────────────────────────────
+dev_quiz:
+  title: "🖥️ Developer Cyber Horoscope — Your Code's Dark Fate"
+  subtitle: "5 questions. The compiler knows what you did."
+
+  questions:
+    - id: q1
+      text: "Do you ever hardcode secrets, API keys, or passwords directly in your code?"
+      type: single_choice
+      options:
+        - value: always
+          label: "It's fine, the repo is private 🔒"
+          risk_score: 30
+        - value: sometimes
+          label: "Only in config files, not the main code"
+          risk_score: 15
+        - value: never
+          label: "Environment variables and secrets manager only"
+          risk_score: 0
+
+    - id: q2
+      text: "How do you handle known CVEs (vulnerabilities) in your dependencies?"
+      type: single_choice
+      options:
+        - value: never
+          label: "npm audit? Never heard of her"
+          risk_score: 25
+        - value: sometimes
+          label: "I check when I remember, or when it breaks"
+          risk_score: 12
+        - value: always
+          label: "Automated dependency scanning in CI/CD"
+          risk_score: 0
+
+    - id: q3
+      text: "Do you test on production or use production data in your dev environment?"
+      type: single_choice
+      options:
+        - value: always
+          label: "Prod is the best test environment, it has real data"
+          risk_score: 25
+        - value: sometimes
+          label: "Only for 'quick' fixes, never goes wrong"
+          risk_score: 12
+        - value: never
+          label: "Strict environment separation, anonymised test data"
+          risk_score: 0
+
+    - id: q4
+      text: "What is your code review and branch protection setup?"
+      type: single_choice
+      options:
+        - value: none
+          label: "I push directly to main, I trust myself"
+          risk_score: 20
+        - value: sometimes
+          label: "PRs exist but branch protection is off, approvals optional"
+          risk_score: 10
+        - value: always
+          label: "Required reviews, branch protection, signed commits"
+          risk_score: 0
+
+    - id: q5
+      text: "How do you handle error messages and stack traces in production?"
+      type: single_choice
+      options:
+        - value: always
+          label: "Full stack traces shown to the user — helpful for debugging!"
+          risk_score: 20
+        - value: sometimes
+          label: "Detailed errors in staging, sometimes leaks to prod"
+          risk_score: 10
+        - value: never
+          label: "Generic user errors, full traces only in secure logs"
+          risk_score: 0
+
+  score_range:
+    min: 0
+    max: 100
+  raw_max: 120  # 30+25+25+20+20
+
+# ─────────────────────────────────────────────
+# DEVELOPER RISK SCORES (for src/content.py / engine)
+# ─────────────────────────────────────────────
+dev_risk_scores:
+  q1: { always: 30, sometimes: 15, never: 0 }
+  q2: { never: 25, sometimes: 12, always: 0 }
+  q3: { always: 25, sometimes: 12, never: 0 }
+  q4: { none: 20, sometimes: 10, always: 0 }
+  q5: { always: 20, sometimes: 10, never: 0 }
+
+# ─────────────────────────────────────────────
+# DEVELOPER CYBER SIGNS
+# ─────────────────────────────────────────────
+dev_cyber_signs:
+  - range: [0, 20]
+    sign: "Zero Trust Architect"
+    emoji: "🏰"
+    description: "Your codebase is a fortress. Security engineers weep with joy."
+
+  - range: [21, 40]
+    sign: "Dependency Guardian"
+    emoji: "🛡️"
+    description: "You patch things before they become CVEs. Rare energy."
+
+  - range: [41, 60]
+    sign: "The Merge Conflict"
+    emoji: "⚠️"
+    description: "Your intentions are good. Your .env file tells a different story."
+
+  - range: [61, 80]
+    sign: "Prod Cowboy"
+    emoji: "🤠"
+    description: "You deploy on Fridays. You test on prod. You live dangerously."
+
+  - range: [81, 100]
+    sign: "Supply Chain Catastrophe"
+    emoji: "💀"
+    description: "Your npm install is a threat actor's favourite moment of the day."
+
+# ─────────────────────────────────────────────
+# DEVELOPER DIMENSION SCORE LABELS
+# ─────────────────────────────────────────────
+dev_dimensions:
+  secret_hygiene:
+    contributing_questions: [q1]
+    label: "Secret Hygiene"
+    emoji: "🔑"
+    labels_by_score:
+      0: "Immaculate"
+      15: "Questionable"
+      30: "GitHub Search Nightmare"
+
+  dependency_health:
+    contributing_questions: [q2]
+    label: "Dependency Health"
+    emoji: "📦"
+    labels_by_score:
+      0: "Fort Knox"
+      12: "Probably Fine"
+      25: "CVE Buffet"
+
+  environment_discipline:
+    contributing_questions: [q3]
+    label: "Environment Discipline"
+    emoji: "🌍"
+    labels_by_score:
+      0: "Textbook"
+      12: "Casual Chaos"
+      25: "Prod is Dev"
+
+  code_integrity:
+    contributing_questions: [q4]
+    label: "Code Integrity"
+    emoji: "🔀"
+    labels_by_score:
+      0: "Signed & Sealed"
+      10: "Loosely Gated"
+      20: "Yolo Push"
+
+  error_exposure:
+    contributing_questions: [q5]
+    label: "Error Exposure"
+    emoji: "📢"
+    labels_by_score:
+      0: "Silent & Secure"
+      10: "Occasionally Chatty"
+      20: "Stack Trace as a Feature"
+
+# ─────────────────────────────────────────────
+# DEVELOPER CONTENT POOLS (for DEV_CONTENT dict)
+# ─────────────────────────────────────────────
+dev_content_pools:
+
+  secret_prophecies:
+    high:   # q1 score >= 20
+      - "A GitHub Actions bot has already found your AWS key. It emailed the billing team."
+      - "Your .env file has been committed, pushed, and indexed by three search engines. The stars have seen it."
+      - "The spirits warn: 'AWS_SECRET_KEY=supersecret123' is not a secure secret. It is a confession."
+      - "A threat actor is currently thanking you in their group chat for the hardcoded Stripe key."
+    medium: # q1 score 10-19
+      - "Your config file sits one accidental git add away from infamy. Back away slowly."
+      - "The cosmos sees a secret living in a place it should not. Move it to a secrets manager today."
+    low:
+      - "Your secrets are sealed, rotated, and properly stored. The dark web has given up on you."
+
+  dependency_prophecies:
+    high:   # q2 score >= 20
+      - "node_modules contains 47 transitive dependencies last updated in 2019. Three are sentient."
+      - "A critical CVE in your auth library was patched six months ago. You were not informed because you never asked."
+      - "The stars align on Log4Shell energy. Your dependency tree is a historical artefact."
+      - "npm audit returns 1,337 vulnerabilities. You have chosen to ignore all of them. Bold."
+    medium:
+      - "A moderate CVE in your ORM awaits your attention. It is not urgent. It is also not not urgent."
+      - "Dependabot has opened 14 PRs. They have been open since January. They are patient."
+    low:
+      - "Your dependencies are patched, pinned, and scanned. Supply chain attackers have moved on."
+
+  environment_prophecies:
+    high:
+      - "You ran a DELETE query on prod thinking it was staging. The database remembers. So does your CTO."
+      - "A real customer's email address is currently sitting in your local dev logs. GDPR is watching."
+      - "The prod database is your rubber duck. This is not the intended use of a rubber duck."
+      - "You will push a console.log('PROD DATA:', user) to production today. The stars have foreseen it."
+    medium:
+      - "A quick prod test awaits you today. It will not be quick. Nothing is ever quick in prod."
+      - "The line between staging and production grows thin. Reinforce it with environment variables."
+    low:
+      - "Your environments are isolated, your test data is anonymised. DevOps angels watch over you."
+
+  code_integrity_prophecies:
+    high:
+      - "You pushed directly to main at 4:59 PM on a Friday. The deployment pipeline felt it."
+      - "A force push has overwritten a colleague's work. They have not noticed yet. This is the calm before."
+      - "The spirits see a commit message that says 'fix'. It is not clear what was fixed. Neither do you."
+      - "Branch protection is off. This is fine. Everything is fine. (It is not fine.)"
+    medium:
+      - "A PR sits unreviewed for its third day. The code inside is aging like milk, not wine."
+      - "Your branch protection rules have exceptions. Someone will exploit one of those exceptions today."
+    low:
+      - "Your commits are signed, your PRs reviewed, your main branch protected. You may rest."
+
+  error_exposure_prophecies:
+    high:
+      - "Your 500 error page contains a full stack trace, the database schema, and your home IP. Informative."
+      - "A curious user has found your /debug endpoint. It is not password protected. They are taking notes."
+      - "The exception message 'NullPointerException at UserService.java:247' has been screenshot and posted."
+      - "Your error logs are public. A penetration tester is reading them right now and smiling."
+    medium:
+      - "A verbose error message will slip through to production today. It will contain more than intended."
+      - "Your staging errors are detailed. Your prod errors are sometimes also detailed. Sometimes."
+    low:
+      - "Your errors are generic to users and detailed only in secured logs. Attackers learn nothing from you."
+
+  daily_dev_prophecies:
+    # One picked at random for every developer, regardless of score
+    - "A dependency you have never heard of is responsible for 40% of your attack surface. The stars advise npm audit."
+    - "Someone will push credentials to a public repo today. The stars hope it is not you."
+    - "Mercury is in CVE retrograde. Do not deploy today without reading the changelog."
+    - "An intern will ask why the API key is in the README. You will not have a good answer."
+    - "A forgotten S3 bucket, left public in 2022, will resurface today. Check your AWS console."
+    - "The ghost of a deleted branch still lives in someone's local clone. It contains secrets."
+    - "Your Docker image runs as root. The container security gods are disappointed but not surprised."
+    - "A SQL query built by string concatenation is waiting patiently for its moment. Use parameterised queries."
+    - "The .gitignore file has a gap. It always has a gap. Today you will find it."
+    - "CORS is set to '*' somewhere in your codebase. It is waving at everyone."
+
+  lucky_dev_charms:
+    # Actionable security tip for developers
+    - "Run 'git secret scan' or install truffleHog to check your repo history for leaked credentials."
+    - "Enable Dependabot or Renovate on your repo — automated dependency PRs take 5 minutes to set up."
+    - "Add branch protection to main: require at least 1 review and passing CI before merge."
+    - "Move all secrets to AWS Secrets Manager or Parameter Store and rotate them today."
+    - "Add 'npm audit --audit-level=high' as a required CI step — it blocks deploys on critical CVEs."
+    - "Set up separate AWS accounts for dev, staging, and prod — free under AWS Organizations."
+    - "Add a generic error handler that logs full traces internally but returns only a reference ID to users."
+    - "Enable CloudTrail in your AWS account — it records every API call for free for 90 days."
+    - "Run 'docker scout' or 'trivy' on your container images before pushing to prod."
+    - "Sign your commits with GPG — GitHub shows a 'Verified' badge and it takes 10 minutes to set up."
+
+  lucky_dev_numbers:
+    - 443    # HTTPS
+    - 22     # SSH
+    - 8080   # Dev server everyone exposes accidentally
+    - 3306   # MySQL — the one that gets exposed to 0.0.0.0
+    - 9200   # Elasticsearch — the one that really gets exposed to 0.0.0.0
+    - 1337   # Classic
+    - 4040   # ngrok — "just for testing"
+    - 6379   # Redis — also frequently exposed
+
+  dev_roast_messages:
+    # Triggered when final_score >= 70
+    - "The OWASP Top 10 is not a bucket list. And yet here we are."
+    - "Three CVEs, two prod incidents, and one hardcoded password walk into a bar. The bartender is your CTO."
+    - "Security researchers have bookmarked your GitHub profile. Not as a reference. As a cautionary tale."
+    - "Your application has been pentested by accident — a script kiddie stumbled in and left a note."
+    - "The words 'it works on my machine' have been entered as evidence."

@@ -1,0 +1,274 @@
+lambda_code_spec:
+  description: |
+    Detailed implementation instructions for each Python file in src/.
+    Kiro should generate these files exactly as described.
+    All logic is pure Python — no pip dependencies required.
+
+# ─────────────────────────────────────────────
+# FILE: src/handler.py
+# ─────────────────────────────────────────────
+files:
+
+  handler.py:
+    purpose: Lambda entry point — parse event, call engine, return response
+    imports:
+      - json
+      - logging
+      - os
+      - src.horoscope_engine as engine
+      - src.validator as validator
+
+    lambda_handler:
+      signature: "def lambda_handler(event: dict, context) -> dict"
+      steps:
+        1: |
+          Set up structured logging:
+            logger = logging.getLogger()
+            logger.setLevel(os.environ.get("LOG_LEVEL", "INFO"))
+
+        2: |
+          Handle GET /health:
+            if event.get("routeKey") == "GET /health":
+              return _response(200, {"status": "healthy", "message": "The cyber spirits are with us."})
+
+        3: |
+          Parse request body:
+            try:
+              body = json.loads(event.get("body") or "{}")
+            except json.JSONDecodeError:
+              return _response(400, {"error": "INVALID_JSON", "message": "Request body must be valid JSON.", "status": 400})
+
+        4: |
+          Validate answers:
+            validation_error = validator.validate_answers(body.get("answers", {}))
+            if validation_error:
+              return _response(400, {"error": "INVALID_ANSWERS", "message": validation_error, "status": 400})
+
+        5: |
+          Generate horoscope:
+            result = engine.generate(body["answers"])
+
+        6: |
+          Return 200 with CORS headers:
+            return _response(200, result)
+
+    _response_helper:
+      signature: "def _response(status_code: int, body: dict) -> dict"
+      returns:
+        statusCode: status_code
+        headers:
+          Content-Type: application/json
+          Access-Control-Allow-Origin: "*"
+          Access-Control-Allow-Methods: "POST,GET,OPTIONS"
+          Access-Control-Allow-Headers: "Content-Type"
+        body: "json.dumps(body)"
+
+  # ───────────────────────────────────────────
+  validator.py:
+  # ───────────────────────────────────────────
+    purpose: Validate incoming quiz answers before processing
+    imports: []  # no imports needed
+
+    VALID_ANSWERS:
+      q1: [always, sometimes, never]
+      q2: [none, some, all]
+      q3: [never, sometimes, always]
+      q4: [regularly, once_or_twice, never]
+      q5: [always, sometimes, never]
+
+    validate_answers:
+      signature: "def validate_answers(answers: dict) -> str | None"
+      logic: |
+        1. If answers is not a dict: return "answers must be an object"
+        2. For each question_id in VALID_ANSWERS:
+             if question_id not in answers:
+               return f"Missing answer for {question_id}"
+             if answers[question_id] not in VALID_ANSWERS[question_id]:
+               return f"Invalid value '{answers[question_id]}' for {question_id}. Allowed: {', '.join(VALID_ANSWERS[question_id])}"
+        3. return None  # all valid
+
+  # ───────────────────────────────────────────
+  horoscope_engine.py:
+  # ───────────────────────────────────────────
+    purpose: Core scoring and horoscope generation logic
+    imports:
+      - random
+      - datetime
+      - src.content as content
+
+    RISK_SCORES:
+      q1: { always: 30, sometimes: 15, never: 0 }
+      q2: { none: 25, some: 10, all: 0 }
+      q3: { never: 20, sometimes: 10, always: 0 }
+      q4: { regularly: 25, once_or_twice: 10, never: 0 }
+      q5: { always: 20, sometimes: 10, never: 0 }
+
+    RAW_MAX: 120  # 30+25+20+25+20
+
+    CYBER_SIGNS:
+      - threshold: 20
+        sign: Firewall Phoenix
+        emoji: "🦅"
+        description: "Rising from the ashes of every breach attempt, untouched."
+      - threshold: 40
+        sign: Encryption Wizard
+        emoji: "🧙"
+        description: "Your digital spells keep most threats at bay."
+      - threshold: 60
+        sign: Patch Warrior
+        emoji: "⚔️"
+        description: "You fight the good fight, but a few chinks remain in your armour."
+      - threshold: 80
+        sign: Phishing Magnet
+        emoji: "🧲"
+        description: "Scammers have placed a standing order with your email address."
+      - threshold: 100
+        sign: Data Breach Influencer
+        emoji: "📢"
+        description: "You are basically unpaid marketing for the dark web."
+
+    generate:
+      signature: "def generate(answers: dict) -> dict"
+      steps:
+        1: |
+          Calculate raw_score:
+            raw_score = sum(RISK_SCORES[q][answers[q]] for q in RISK_SCORES)
+            final_score = round((raw_score / RAW_MAX) * 100)
+
+        2: |
+          Determine cyber_sign:
+            for entry in CYBER_SIGNS:
+              if final_score <= entry["threshold"]:
+                sign_data = entry
+                break
+
+        3: |
+          Calculate dimension scores:
+            phishing_inputs = [q2, q5]  # from answers
+            phishing_raw = RISK_SCORES["q2"][answers["q2"]] + RISK_SCORES["q5"][answers["q5"]]
+            phishing_risk_pct = round((phishing_raw / 45) * 100)
+
+            password_raw = RISK_SCORES["q1"][answers["q1"]]
+            password_aura = _map_to_label(password_raw, {0: "Legendary", 15: "Moderate", 30: "Catastrophic"})
+
+            wifi_raw = RISK_SCORES["q3"][answers["q3"]] + RISK_SCORES["q4"][answers["q4"]]
+            wifi_karma = _map_to_label(wifi_raw, {0: "Pristine", 10: "Cautious", 20: "Reckless", 35: "Suicidal"})
+
+            scam_raw = RISK_SCORES["q4"][answers["q4"]] + RISK_SCORES["q5"][answers["q5"]]
+            scam_magnet = _map_to_label(scam_raw, {0: "Repellent", 10: "Neutral", 20: "Attractive", 30: "Irresistible"})
+
+            leak_raw = RISK_SCORES["q1"][answers["q1"]] + RISK_SCORES["q2"][answers["q2"]] + RISK_SCORES["q3"][answers["q3"]]
+            data_leak = _map_to_label(leak_raw, {0: "Minimal", 20: "Low", 40: "Moderate", 60: "High", 75: "Certain"})
+
+        4: |
+          Select prophecies using final_score:
+            phishing_level = "high" if phishing_risk_pct >= 60 else ("medium" if phishing_risk_pct >= 30 else "low")
+            phishing_prophecy = random.choice(content.CONTENT["phishing_prophecies"][phishing_level])
+
+            password_level = "high" if password_raw >= 20 else ("medium" if password_raw >= 10 else "low")
+            password_prophecy = random.choice(content.CONTENT["password_prophecies"][password_level])
+
+            wifi_level = "high" if wifi_raw >= 30 else ("medium" if wifi_raw >= 15 else "low")
+            wifi_prophecy = random.choice(content.CONTENT["wifi_prophecies"][wifi_level])
+
+            leak_level = "high" if leak_raw >= 55 else ("medium" if leak_raw >= 25 else "low")
+            leak_prophecy = random.choice(content.CONTENT["data_leak_prophecies"][leak_level])
+
+            daily_prophecy = random.choice(content.CONTENT["daily_security_prophecies"])
+
+        5: |
+          Select lucky charm and number:
+            lucky_charm = random.choice(content.CONTENT["lucky_security_charms"])
+            lucky_number = random.choice(content.CONTENT["lucky_security_numbers"])
+
+        6: |
+          Apply roast mode if final_score >= 70:
+            roast = random.choice(content.CONTENT["roast_mode"]["messages"]) if final_score >= 70 else None
+
+        7: |
+          Build and return response dict:
+            return {
+              "final_score": final_score,
+              "cyber_sign": sign_data["sign"],
+              "cyber_sign_emoji": sign_data["emoji"],
+              "cyber_sign_description": sign_data["description"],
+              "dimensions": {
+                "phishing_risk_pct": phishing_risk_pct,
+                "password_aura": password_aura,
+                "wifi_karma": wifi_karma,
+                "scam_magnet_level": scam_magnet,
+                "data_leak_risk": data_leak,
+              },
+              "prophecies": {
+                "phishing": phishing_prophecy,
+                "password": password_prophecy,
+                "wifi": wifi_prophecy,
+                "data_leak": leak_prophecy,
+                "daily": daily_prophecy,
+              },
+              "lucky_security_charm": lucky_charm,
+              "lucky_security_number": lucky_number,
+              "roast_message": roast,
+              "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
+            }
+
+    _map_to_label_helper:
+      signature: "def _map_to_label(score: int, thresholds: dict) -> str"
+      logic: |
+        thresholds is a dict of {min_score: label}.
+        Return the label for the highest threshold that score >= min_score.
+        Example: score=15, thresholds={0:"A", 10:"B", 20:"C"} → "B"
+
+  # ───────────────────────────────────────────
+  content.py:
+  # ───────────────────────────────────────────
+    purpose: |
+      All static content strings (prophecies, roasts, charms, lucky numbers).
+      Populate from the content_pools defined in 02-functional-spec.yaml.
+      Structure: CONTENT = { "phishing_prophecies": {"high": [...], "medium": [...], "low": [...]}, ... }
+
+# ─────────────────────────────────────────────
+# UNIT TESTS (Kiro should generate these too)
+# ─────────────────────────────────────────────
+tests:
+  file: tests/test_horoscope_engine.py
+  framework: pytest
+  cases:
+    - name: test_max_risk_score
+      description: All worst answers → final_score == 100, sign == Data Breach Influencer
+      input: { q1: always, q2: none, q3: never, q4: regularly, q5: always }
+      assertions:
+        - result["final_score"] == 100
+        - result["cyber_sign"] == "Data Breach Influencer"
+        - result["roast_message"] is not None
+
+    - name: test_min_risk_score
+      description: All best answers → final_score == 0, sign == Firewall Phoenix
+      input: { q1: never, q2: all, q3: always, q4: never, q5: never }
+      assertions:
+        - result["final_score"] == 0
+        - result["cyber_sign"] == "Firewall Phoenix"
+        - result["roast_message"] is None
+
+    - name: test_roast_threshold
+      description: Score exactly 70 should trigger roast message
+      note: Craft an answer set that yields exactly 70
+
+    - name: test_all_keys_present
+      description: Response always contains all required keys regardless of score
+      input: { q1: sometimes, q2: some, q3: sometimes, q4: once_or_twice, q5: sometimes }
+      assertions:
+        - all required keys exist in result
+        - result["generated_at"] ends with "Z"
+
+    - name: test_validator_missing_question
+      description: Missing q3 should return validation error
+      input: { q1: always, q2: none, q4: regularly, q5: always }
+      assertions:
+        - validator.validate_answers(answers) == "Missing answer for q3"
+
+    - name: test_validator_invalid_value
+      description: q1 = "maybe" should return descriptive error
+      input: { q1: maybe, q2: none, q3: never, q4: regularly, q5: always }
+      assertions:
+        - "Invalid value 'maybe' for q1" in validator.validate_answers(answers)

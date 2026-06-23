@@ -1,0 +1,87 @@
+feature:
+  name: Developer Mode Toggle
+  version: "2.0.0"
+  base_version: "1.0.0"
+  type: additive_only
+  description: |
+    Adds a "Normal User / Developer" toggle to CyberHoroscope.
+    Developers get a separate set of questions and horoscope output
+    tailored to dev-specific security sins (hardcoded secrets, pushing
+    to main, ignoring CVEs, using prod as test env, etc).
+    
+    The toggle switches the entire quiz UI and result theming.
+    Everything from v1.0.0 (Normal User mode) is preserved untouched.
+
+change_philosophy: |
+  ADDITIVE ONLY. No existing file is deleted or overwritten.
+  Changes to existing files are minimal surgical additions only.
+  The Normal User quiz, scoring, content, and API behaviour are identical to v1.0.0.
+
+# ─────────────────────────────────────────────
+# WHAT CHANGES vs WHAT STAYS THE SAME
+# ─────────────────────────────────────────────
+changes:
+  backend:
+    src/content.py:
+      change_type: ADD new dict
+      instruction: |
+        Append a new top-level dict called DEV_CONTENT at the bottom of the file.
+        Do NOT touch the existing CONTENT dict at all.
+
+    src/horoscope_engine.py:
+      change_type: ADD new function
+      instruction: |
+        Add a new function called generate_dev() at the bottom of the file.
+        It mirrors the structure of generate() but uses DEV_RISK_SCORES,
+        DEV_CYBER_SIGNS, and DEV_CONTENT.
+        Do NOT modify generate() or any existing constants.
+
+    src/handler.py:
+      change_type: ADD routing logic
+      instruction: |
+        In lambda_handler, after parsing the body, check for a new field:
+          mode = body.get("mode", "user")   # defaults to "user" — backward compatible
+        If mode == "dev": call engine.generate_dev(answers)
+        If mode == "user" or missing: call engine.generate(answers) as before.
+        Add DEV_VALID_ANSWERS to validator and a mode param to validate_answers().
+        All existing behaviour when mode is absent or "user" is IDENTICAL to v1.0.0.
+
+    src/validator.py:
+      change_type: ADD new constant + update signature
+      instruction: |
+        Add DEV_VALID_ANSWERS dict for the 5 developer questions.
+        Update validate_answers(answers, mode="user") to use the correct
+        validation dict based on mode. Default mode="user" keeps v1.0.0 behaviour.
+
+  frontend:
+    frontend/index.html:
+      change_type: ADD toggle UI + dev quiz section
+      instruction: |
+        Add a mode toggle button at the top of the quiz section.
+        Add a second hidden quiz section for dev questions (id="dev-quiz-section").
+        The toggle shows/hides the correct quiz section and sets a JS variable
+        currentMode = "user" | "dev" which is sent in the API request body.
+        Add dev-themed result rendering (different colour accent, different labels).
+        All existing Normal User HTML elements keep their current IDs and structure.
+
+  infrastructure:
+    template.yaml:
+      change_type: NONE
+      instruction: |
+        No changes required. The same Lambda function, API Gateway, S3, and
+        CloudFront serve both modes. The mode is just a field in the request body.
+
+  tests:
+    tests/test_horoscope_engine.py:
+      change_type: ADD new test cases
+      instruction: |
+        Append new test functions for generate_dev().
+        Do not modify existing test functions.
+
+no_changes_to:
+  - samconfig.toml
+  - template.yaml
+  - README.md (optional: add a note about dev mode)
+  - Any existing CONTENT dict keys
+  - Any existing generate() logic
+  - Any existing test cases

@@ -1,0 +1,268 @@
+functional_spec:
+  module: CyberHoroscope Core Logic
+  version: "1.0.0"
+
+# ─────────────────────────────────────────────
+# QUIZ QUESTIONS (presented to the user)
+# ─────────────────────────────────────────────
+quiz:
+  title: "Answer 5 questions to reveal your Cyber Fate 🔮"
+  questions:
+    - id: q1
+      text: "Do you reuse the same password across multiple sites?"
+      type: single_choice
+      options:
+        - value: always
+          label: "Yes, one password rules them all 💪"
+          risk_score: 30
+        - value: sometimes
+          label: "Sometimes, for unimportant sites"
+          risk_score: 15
+        - value: never
+          label: "Never — I use a password manager"
+          risk_score: 0
+
+    - id: q2
+      text: "Do you have Two-Factor Authentication (2FA) enabled?"
+      type: single_choice
+      options:
+        - value: none
+          label: "2FA? Sounds like a TV channel"
+          risk_score: 25
+        - value: some
+          label: "On a few important accounts"
+          risk_score: 10
+        - value: all
+          label: "Everywhere possible"
+          risk_score: 0
+
+    - id: q3
+      text: "How often do you update your apps and OS?"
+      type: single_choice
+      options:
+        - value: never
+          label: "I click 'Remind Me Later' since 2019"
+          risk_score: 20
+        - value: sometimes
+          label: "When I remember / when it forces me"
+          risk_score: 10
+        - value: always
+          label: "Auto-updates are enabled"
+          risk_score: 0
+
+    - id: q4
+      text: "Have you ever downloaded cracked / pirated software?"
+      type: single_choice
+      options:
+        - value: regularly
+          label: "That's just called 'free software'"
+          risk_score: 25
+        - value: once_or_twice
+          label: "Once or twice, long ago"
+          risk_score: 10
+        - value: never
+          label: "Never"
+          risk_score: 0
+
+    - id: q5
+      text: "Do you click on shortened links (bit.ly, tinyurl) in emails or messages?"
+      type: single_choice
+      options:
+        - value: always
+          label: "Absolutely, they look fine"
+          risk_score: 20
+        - value: sometimes
+          label: "Only from people I know"
+          risk_score: 10
+        - value: never
+          label: "I hover/expand before clicking"
+          risk_score: 0
+
+  score_range:
+    min: 0
+    max: 100   # normalised from raw max of 120
+
+# ─────────────────────────────────────────────
+# SCORING ENGINE
+# ─────────────────────────────────────────────
+scoring:
+  method: additive_weighted
+  normalisation: |
+    raw_score = sum of selected risk_score values (max raw = 120)
+    final_score = round((raw_score / 120) * 100)
+
+  cyber_sign_thresholds:
+    - range: [0, 20]
+      sign: Firewall Phoenix
+      emoji: "🦅"
+      description: "Rising from the ashes of every breach attempt, untouched."
+    - range: [21, 40]
+      sign: Encryption Wizard
+      emoji: "🧙"
+      description: "Your digital spells keep most threats at bay."
+    - range: [41, 60]
+      sign: Patch Warrior
+      emoji: "⚔️"
+      description: "You fight the good fight, but a few chinks remain in your armour."
+    - range: [61, 80]
+      sign: Phishing Magnet
+      emoji: "🧲"
+      description: "Scammers have placed a standing order with your email address."
+    - range: [81, 100]
+      sign: Data Breach Influencer
+      emoji: "📢"
+      description: "You are basically unpaid marketing for the dark web."
+
+  dimension_scores:
+    # Each dimension is derived from specific question answers
+    phishing_risk:
+      contributing_questions: [q2, q5]
+      label: "Phishing Risk"
+      emoji: "🎣"
+    password_aura:
+      contributing_questions: [q1]
+      label: "Password Aura"
+      emoji: "🔐"
+    wifi_karma:
+      contributing_questions: [q3, q4]
+      label: "Wi-Fi Karma"
+      emoji: "📶"
+    scam_magnet_level:
+      contributing_questions: [q4, q5]
+      label: "Scam Magnet Level"
+      emoji: "🧲"
+    data_leak_risk:
+      contributing_questions: [q1, q2, q3]
+      label: "Data Leak Risk"
+      emoji: "🚨"
+
+# ─────────────────────────────────────────────
+# HOROSCOPE CONTENT POOLS
+# ─────────────────────────────────────────────
+content_pools:
+  # Phishing prophecies — selected based on phishing_risk score
+  phishing_prophecies:
+    high:   # score >= 60
+      - "A mysterious email promising free AWS credits shall appear today. Resist temptation."
+      - "A Nigerian prince has marked you as 'easy target of the month'. Congratulations."
+      - "The stars see you hovering over 'CLICK HERE TO WIN'. Step away from the mouse."
+    medium: # score 30-59
+      - "An unverified sender will offer you something too good to be true. It is."
+      - "Mercury is in phishing retrograde. Verify sender addresses twice today."
+    low:    # score < 30
+      - "Your phishing radar is finely tuned. Scammers have your address on a do-not-contact list."
+
+  password_prophecies:
+    high:
+      - "The stars suggest that 'Password123' is not the legendary shield you believe it is."
+      - "Your password was last seen in 47 data breaches. It is tired. Retire it."
+      - "Aries@123 has filed for retirement. A password manager is hiring."
+    medium:
+      - "Your passwords are like a deadbolt on a screen door — present, but not protective."
+      - "The cosmos whispers: length + randomness = destiny. Consider a passphrase."
+    low:
+      - "Your password aura radiates strength. The dark web has moved on to easier targets."
+
+  wifi_prophecies:
+    high:
+      - "Avoid any network named 'FreeAirportWiFi_NoScam'. Especially that one."
+      - "A rogue access point disguised as your local café network awaits. Bring a VPN."
+      - "The man-in-the-middle has reserved a table for three: you, him, and your bank details."
+    medium:
+      - "Public Wi-Fi beckons today. A VPN shall be your amulet."
+    low:
+      - "Your Wi-Fi karma is pristine. You may safely update that 4GB game patch."
+
+  data_leak_prophecies:
+    high:
+      - "Three data brokers are currently bidding on your email address. The auction closes at midnight."
+      - "haveibeenpwned.com has a fan page dedicated to your credentials."
+    medium:
+      - "A minor tremor in the data leak cosmos. Enable breach alerts on your email."
+    low:
+      - "Your data footprint is impressively small. The dark web is unaware of your existence."
+
+  daily_security_prophecies:
+    # Shown to every user regardless of score — one picked at random
+    - "An unknown USB drive shall cross your path today. The stars advise caution."
+    - "Mercury is in malware retrograde. Update your antivirus before leaving the house."
+    - "A pop-up shall claim your computer has 47 viruses. It is lying. Close the tab."
+    - "Someone will ask for your OTP 'just to verify your account'. They are lying."
+    - "A certificate warning shall appear in your browser today. Heed it."
+    - "A software update notification will feel inconvenient. Install it anyway."
+    - "The stars align for enabling a password manager. Today is the day."
+
+  lucky_security_charms:
+    # Actionable tip — always educational
+    - "Enable Two-Factor Authentication on your email account."
+    - "Check haveibeenpwned.com to see if your email appeared in a breach."
+    - "Install a reputable password manager (Bitwarden is free and open-source)."
+    - "Enable auto-updates on your OS and browser."
+    - "Use a VPN on public Wi-Fi networks."
+    - "Review which apps have access to your Google/Apple account this week."
+    - "Turn on login notifications for your bank account."
+
+  lucky_security_numbers:
+    - 404
+    - 443
+    - 1337
+    - 8080
+    - 256
+    - 2048
+    - 3389  # RDP port — "avoid this number in your firewall"
+
+  roast_mode:
+    # Triggered when final_score >= 70
+    enabled: true
+    messages:
+      - "The cybersecurity gods have reviewed your digital habits and are deeply concerned. A formal warning has been issued."
+      - "Your password hygiene has been reported to three separate international authorities. Two have responded."
+      - "Security researchers have nominated your browser history as a case study in 'what not to do'."
+      - "Your cyber spirit animal is an unpatched Windows XP machine running in a hospital. Respect the legacy."
+
+# ─────────────────────────────────────────────
+# OUTPUT SCHEMA (what Lambda returns)
+# ─────────────────────────────────────────────
+output_schema:
+  horoscope_response:
+    final_score:
+      type: integer
+      range: [0, 100]
+    cyber_sign:
+      type: string
+      example: "Phishing Magnet"
+    cyber_sign_emoji:
+      type: string
+      example: "🧲"
+    cyber_sign_description:
+      type: string
+    dimensions:
+      phishing_risk_pct:
+        type: integer
+        range: [0, 100]
+      password_aura:
+        type: string
+        enum: [Legendary, Strong, Moderate, Weak, Catastrophic]
+      wifi_karma:
+        type: string
+        enum: [Pristine, Cautious, Reckless, Suicidal]
+      scam_magnet_level:
+        type: string
+        enum: [Repellent, Neutral, Attractive, Irresistible]
+      data_leak_risk:
+        type: string
+        enum: [Minimal, Low, Moderate, High, Certain]
+    prophecies:
+      phishing: { type: string }
+      password: { type: string }
+      wifi:     { type: string }
+      data_leak: { type: string }
+      daily:    { type: string }
+    lucky_security_charm: { type: string }
+    lucky_security_number: { type: integer }
+    roast_message:
+      type: string
+      nullable: true   # only present when final_score >= 70
+    generated_at:
+      type: string
+      format: ISO8601 UTC timestamp

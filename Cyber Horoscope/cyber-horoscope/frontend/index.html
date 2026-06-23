@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🔮 CyberHoroscope — Your Daily Security Fate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&family=Cinzel:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ═══════════════════════════════════════════
+       RESET & VARIABLES
+    ═══════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0a0a0f;
+      --surface:    #12121e;
+      --surface2:   #1a1a2e;
+      --primary:    #7c3aed;
+      --primary-glow: rgba(124,58,237,0.35);
+      --accent:     #06d6a0;
+      --accent-glow: rgba(6,214,160,0.25);
+      --danger:     #ef4444;
+      --warning:    #f59e0b;
+      --success:    #10b981;
+      --text:       #f1f5f9;
+      --text-muted: #94a3b8;
+      --border:     #1e1e3a;
+      --radius:     12px;
+      --radius-lg:  20px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* ═══════════════════════════════════════════
+       STAR CANVAS BACKGROUND
+    ═══════════════════════════════════════════ */
+    #starCanvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ═══════════════════════════════════════════
+       LAYOUT
+    ═══════════════════════════════════════════ */
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    /* ═══════════════════════════════════════════
+       HEADER
+    ═══════════════════════════════════════════ */
+    header {
+      text-align: center;
+      padding: 3rem 0 2rem;
+    }
+
+    header h1 {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.8rem, 5vw, 3rem);
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      color: var(--primary);
+      text-shadow: 0 0 30px var(--primary-glow), 0 0 60px var(--primary-glow);
+      line-height: 1.2;
+    }
+
+    header .tagline {
+      margin-top: 0.75rem;
+      color: var(--text-muted);
+      font-size: 1rem;
+      letter-spacing: 0.04em;
+    }
+
+    /* ═══════════════════════════════════════════
+       CARDS
+    ═══════════════════════════════════════════ */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .card.glow {
+      border-color: var(--primary);
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
+
+    /* ═══════════════════════════════════════════
+       QUIZ SECTION
+    ═══════════════════════════════════════════ */
+    #quiz-section .intro {
+      text-align: center;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+      font-size: 1.05rem;
+    }
+
+    .question-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .question-number {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.7rem;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .question-text {
+      font-size: 1.05rem;
+      font-weight: 500;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .option-btn {
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      padding: 0.75rem 1rem;
+      text-align: left;
+      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+
+    .option-btn:hover {
+      border-color: var(--primary);
+      background: rgba(124,58,237,0.1);
+    }
+
+    .option-btn.selected {
+      border-color: var(--accent);
+      background: rgba(6,214,160,0.1);
+      box-shadow: 0 0 12px var(--accent-glow);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* ═══════════════════════════════════════════
+       SUBMIT BUTTON
+    ═══════════════════════════════════════════ */
+    .btn-primary {
+      background: linear-gradient(135deg, #7c3aed, #5b21b6);
+      border: none;
+      border-radius: var(--radius);
+      color: #fff;
+      cursor: pointer;
+      font-family: 'Orbitron', monospace;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 1rem 2rem;
+      width: 100%;
+      margin-top: 1.5rem;
+      transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      box-shadow: 0 0 25px var(--primary-glow);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active:not(:disabled) { transform: translateY(0); }
+
+    .btn-primary:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1.5px solid var(--primary);
+      border-radius: var(--radius);
+      color: var(--primary);
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 0.75rem 1.5rem;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(124,58,237,0.15);
+      box-shadow: 0 0 15px var(--primary-glow);
+    }
+
+    /* ═══════════════════════════════════════════
+       LOADING SECTION
+    ═══════════════════════════════════════════ */
+    #loading-section {
+      display: none;
+      text-align: center;
+      padding: 5rem 2rem;
+    }
+
+    .crystal-ball {
+      font-size: 5rem;
+      display: block;
+      animation: pulse-glow 1.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { transform: scale(1);   filter: drop-shadow(0 0 8px var(--primary)); }
+      50%       { transform: scale(1.12); filter: drop-shadow(0 0 24px var(--primary)); }
+    }
+
+    #loading-msg {
+      margin-top: 1.5rem;
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      font-style: italic;
+      min-height: 1.6rem;
+      transition: opacity 0.4s;
+    }
+
+    /* ═══════════════════════════════════════════
+       RESULT SECTION
+    ═══════════════════════════════════════════ */
+    #result-section {
+      display: none;
+      animation: fadeIn 0.7s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Score banner */
+    .score-banner {
+      text-align: center;
+      padding: 2.5rem 1.5rem;
+      border-radius: var(--radius-lg);
+      border: 2px solid var(--border);
+      margin-bottom: 1.5rem;
+      transition: border-color 0.5s, box-shadow 0.5s;
+    }
+
+    .score-banner.score-low    { border-color: var(--success); box-shadow: 0 0 30px rgba(16,185,129,0.3); }
+    .score-banner.score-medium { border-color: var(--warning); box-shadow: 0 0 30px rgba(245,158,11,0.3); }
+    .score-banner.score-high   { border-color: var(--danger);  box-shadow: 0 0 30px rgba(239,68,68,0.3); }
+
+    .score-number {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(3.5rem, 10vw, 6rem);
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .score-low    .score-number { color: var(--success); text-shadow: 0 0 20px rgba(16,185,129,0.6); }
+    .score-medium .score-number { color: var(--warning); text-shadow: 0 0 20px rgba(245,158,11,0.6); }
+    .score-high   .score-number { color: var(--danger);  text-shadow: 0 0 20px rgba(239,68,68,0.6); }
+
+    .score-label { font-size: 0.85rem; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 0.25rem; }
+
+    .cyber-sign {
+      margin-top: 1.25rem;
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.2rem, 4vw, 1.8rem);
+      font-weight: 700;
+    }
+
+    .sign-description {
+      margin-top: 0.5rem;
+      font-style: italic;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    /* Roast box */
+    #roast-box {
+      display: none;
+      background: rgba(239,68,68,0.08);
+      border: 1.5px solid var(--danger);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+      color: var(--danger);
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    #roast-box .roast-icon { font-size: 1.4rem; margin-right: 0.5rem; }
+
+    /* Dimensions grid */
+    .dimensions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .dimension-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+    }
+
+    .dimension-title {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.5rem;
+    }
+
+    .dimension-value {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--text);
+    }
+
+    .progress-bar-wrap {
+      background: var(--surface2);
+      border-radius: 99px;
+      height: 8px;
+      margin-top: 0.5rem;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      width: 0%;
+      transition: width 1s ease;
+    }
+
+    .badge {
+      display: inline-block;
+      border-radius: 99px;
+      padding: 0.2rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-top: 0.4rem;
+    }
+
+    .badge-green  { background: rgba(16,185,129,0.15); color: var(--success); }
+    .badge-yellow { background: rgba(245,158,11,0.15);  color: var(--warning); }
+    .badge-red    { background: rgba(239,68,68,0.15);   color: var(--danger);  }
+    .badge-purple { background: rgba(124,58,237,0.15);  color: var(--primary); }
+
+    /* Prophecies section */
+    .section-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 1rem;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    .prophecy-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+    }
+
+    .prophecy-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 0.1rem; }
+
+    .prophecy-content {}
+
+    .prophecy-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.3rem;
+    }
+
+    .prophecy-text {
+      font-family: 'Cinzel', serif;
+      font-size: 0.9rem;
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* Lucky section */
+    .lucky-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .lucky-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+
+    .lucky-card.charm {
+      border: 1.5px solid var(--accent);
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+
+    .lucky-card.number { border: 1px solid var(--border); }
+
+    .lucky-title {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.5rem;
+    }
+
+    .lucky-charm-text {
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .lucky-number-val {
+      font-family: 'Orbitron', monospace;
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: var(--primary);
+      text-shadow: 0 0 15px var(--primary-glow);
+    }
+
+    .lucky-note { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.3rem; }
+
+    /* CTA buttons */
+    .cta-row {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .cta-row .btn-primary  { flex: 1; margin-top: 0; }
+    .cta-row .btn-secondary { flex: 1; }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(4rem);
+      background: var(--surface2);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      color: var(--accent);
+      padding: 0.75rem 1.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      opacity: 0;
+      transition: opacity 0.3s, transform 0.3s;
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      padding: 2rem 0 1rem;
+      line-height: 1.8;
+    }
+
+    footer strong { color: var(--text); }
+
+    /* Error state */
+    #error-box {
+      display: none;
+      background: rgba(239,68,68,0.08);
+      border: 1.5px solid var(--danger);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      text-align: center;
+      color: var(--danger);
+      margin-top: 1rem;
+    }
+
+    #error-box button {
+      margin-top: 1rem;
+      background: var(--danger);
+      border: none;
+      border-radius: var(--radius);
+      color: #fff;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.6rem 1.5rem;
+    }
+
+    /* ═══════════════════════════════════════════
+       MODE TOGGLE — v2.0.0
+    ═══════════════════════════════════════════ */
+    .mode-toggle-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .mode-toggle-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .toggle-track {
+      position: relative;
+      width: 200px;
+      height: 40px;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: 99px;
+      cursor: pointer;
+      transition: border-color 0.3s;
+      overflow: hidden;
+    }
+
+    .toggle-track:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    .toggle-track[data-mode="dev"] {
+      border-color: #f59e0b;
+    }
+
+    .toggle-thumb {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 92px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--primary), #5b21b6);
+      border-radius: 99px;
+      transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), background 0.3s;
+    }
+
+    .toggle-track[data-mode="dev"] .toggle-thumb {
+      transform: translateX(100px);
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+
+    .toggle-labels {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .toggle-labels span {
+      flex: 1;
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: color 0.3s;
+      position: relative;
+      z-index: 1;
+    }
+
+    .toggle-track[data-mode="user"] .lbl-user { color: #fff; }
+    .toggle-track[data-mode="user"] .lbl-dev  { color: var(--text-muted); }
+    .toggle-track[data-mode="dev"]  .lbl-user { color: var(--text-muted); }
+    .toggle-track[data-mode="dev"]  .lbl-dev  { color: #fff; }
+
+    /* Dev mode accent overrides */
+    body.dev-mode header h1 {
+      color: #f59e0b;
+      text-shadow: 0 0 30px rgba(245,158,11,0.4), 0 0 60px rgba(245,158,11,0.2);
+    }
+
+    body.dev-mode .score-low    { border-color: var(--success); }
+    body.dev-mode .score-medium { border-color: #f59e0b; box-shadow: 0 0 30px rgba(245,158,11,0.3); }
+    body.dev-mode .score-high   { border-color: var(--danger); }
+
+    body.dev-mode .score-medium .score-number { color: #f59e0b; text-shadow: 0 0 20px rgba(245,158,11,0.6); }
+
+    body.dev-mode .section-title { color: #f59e0b; }
+
+    body.dev-mode .lucky-card.charm {
+      border-color: #f59e0b;
+      box-shadow: 0 0 15px rgba(245,158,11,0.25);
+    }
+
+    body.dev-mode .lucky-charm-text { color: #f59e0b; }
+
+    body.dev-mode .lucky-number-val { color: #f59e0b; text-shadow: 0 0 15px rgba(245,158,11,0.4); }
+
+    body.dev-mode .option-btn.selected {
+      border-color: #f59e0b;
+      background: rgba(245,158,11,0.1);
+      box-shadow: 0 0 12px rgba(245,158,11,0.25);
+      color: #f59e0b;
+    }
+
+    body.dev-mode .option-btn:hover {
+      border-color: #f59e0b;
+      background: rgba(245,158,11,0.08);
+    }
+
+    body.dev-mode .question-number { color: #f59e0b; }
+
+    body.dev-mode .btn-primary {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+
+    body.dev-mode .btn-primary:hover:not(:disabled) {
+      box-shadow: 0 0 25px rgba(245,158,11,0.4);
+    }
+
+    body.dev-mode .btn-secondary {
+      border-color: #f59e0b;
+      color: #f59e0b;
+    }
+
+    body.dev-mode .btn-secondary:hover {
+      background: rgba(245,158,11,0.15);
+      box-shadow: 0 0 15px rgba(245,158,11,0.3);
+    }
+
+    /* Dev dimensions grid — 5 items, last spans full */
+    #dev-dimensions-grid .dimension-card:last-child {
+      grid-column: 1 / -1;
+    }
+
+    /* ═══════════════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════════════ */
+    @media (max-width: 640px) {
+      header h1 { font-size: 1.6rem; }
+      .dimensions-grid { grid-template-columns: 1fr; }
+      .lucky-grid { grid-template-columns: 1fr; }
+      .cta-row { flex-direction: column; }
+      .card, .question-card { padding: 1.1rem; }
+      .score-number { font-size: 3.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="starCanvas"></canvas>
+
+<div class="container">
+  <!-- ══ HEADER ══════════════════════════════════ -->
+  <header>
+    <h1>🔮 CYBER HOROSCOPE</h1>
+    <p class="tagline">Your Daily Security Fate — Laugh First, Learn to Protect Yourself Second</p>
+  </header>
+
+  <!-- ══ QUIZ SECTION ════════════════════════════ -->
+  <section id="quiz-section">
+    <!-- Mode toggle -->
+    <div class="mode-toggle-wrap" role="group" aria-label="Quiz mode selection">
+      <span class="mode-toggle-label">Mode:</span>
+      <div class="toggle-track"
+           id="mode-toggle"
+           data-mode="user"
+           role="switch"
+           aria-checked="false"
+           aria-label="Switch to Developer mode"
+           tabindex="0"
+           onclick="toggleMode()"
+           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleMode();}">
+        <div class="toggle-thumb"></div>
+        <div class="toggle-labels">
+          <span class="lbl-user">👤 User</span>
+          <span class="lbl-dev">💻 Dev</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Normal user quiz -->
+    <div id="user-quiz-section">
+    <p class="intro">Answer 5 questions. The cybersecurity stars shall reveal your fate.</p>
+
+    <!-- Q1 -->
+    <div class="question-card" id="card-q1">
+      <div class="question-number">Question 1 / 5</div>
+      <div class="question-text">Do you reuse the same password across multiple sites?</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption('q1','always',this)">Yes, one password rules them all 💪</button>
+        <button class="option-btn" onclick="selectOption('q1','sometimes',this)">Sometimes, for unimportant sites</button>
+        <button class="option-btn" onclick="selectOption('q1','never',this)">Never — I use a password manager</button>
+      </div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="question-card" id="card-q2">
+      <div class="question-number">Question 2 / 5</div>
+      <div class="question-text">Do you have Two-Factor Authentication (2FA) enabled?</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption('q2','none',this)">2FA? Sounds like a TV channel</button>
+        <button class="option-btn" onclick="selectOption('q2','some',this)">On a few important accounts</button>
+        <button class="option-btn" onclick="selectOption('q2','all',this)">Everywhere possible</button>
+      </div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="question-card" id="card-q3">
+      <div class="question-number">Question 3 / 5</div>
+      <div class="question-text">How often do you update your apps and OS?</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption('q3','never',this)">I click 'Remind Me Later' since 2019</button>
+        <button class="option-btn" onclick="selectOption('q3','sometimes',this)">When I remember / when it forces me</button>
+        <button class="option-btn" onclick="selectOption('q3','always',this)">Auto-updates are enabled</button>
+      </div>
+    </div>
+
+    <!-- Q4 -->
+    <div class="question-card" id="card-q4">
+      <div class="question-number">Question 4 / 5</div>
+      <div class="question-text">Have you ever downloaded cracked / pirated software?</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption('q4','regularly',this)">That's just called 'free software'</button>
+        <button class="option-btn" onclick="selectOption('q4','once_or_twice',this)">Once or twice, long ago</button>
+        <button class="option-btn" onclick="selectOption('q4','never',this)">Never</button>
+      </div>
+    </div>
+
+    <!-- Q5 -->
+    <div class="question-card" id="card-q5">
+      <div class="question-number">Question 5 / 5</div>
+      <div class="question-text">Do you click on shortened links (bit.ly, tinyurl) in emails or messages?</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption('q5','always',this)">Absolutely, they look fine</button>
+        <button class="option-btn" onclick="selectOption('q5','sometimes',this)">Only from people I know</button>
+        <button class="option-btn" onclick="selectOption('q5','never',this)">I hover/expand before clicking</button>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="submit-btn" onclick="submitQuiz()" disabled>
+      Reveal My Cyber Fate 🔮
+    </button>
+
+    <div id="error-box">
+      <p id="error-msg">Something went wrong. The cybersecurity cosmos is temporarily misaligned.</p>
+      <button onclick="retryQuiz()">Try Again</button>
+    </div>
+    </div><!-- end #user-quiz-section -->
+
+    <!-- Developer quiz — hidden by default -->
+    <div id="dev-quiz-section" style="display:none;">
+      <p class="intro">5 questions. The compiler knows what you did. 🖥️</p>
+
+      <!-- Dev Q1 -->
+      <div class="question-card" id="card-dq1">
+        <div class="question-number">Question 1 / 5</div>
+        <div class="question-text">Do you ever hardcode secrets, API keys, or passwords directly in your code?</div>
+        <div class="options">
+          <button class="option-btn" onclick="selectDevOption('q1','always',this)">It's fine, the repo is private 🔒</button>
+          <button class="option-btn" onclick="selectDevOption('q1','sometimes',this)">Only in config files, not the main code</button>
+          <button class="option-btn" onclick="selectDevOption('q1','never',this)">Environment variables and secrets manager only</button>
+        </div>
+      </div>
+
+      <!-- Dev Q2 -->
+      <div class="question-card" id="card-dq2">
+        <div class="question-number">Question 2 / 5</div>
+        <div class="question-text">How do you handle known CVEs (vulnerabilities) in your dependencies?</div>
+        <div class="options">
+          <button class="option-btn" onclick="selectDevOption('q2','never',this)">npm audit? Never heard of her</button>
+          <button class="option-btn" onclick="selectDevOption('q2','sometimes',this)">I check when I remember, or when it breaks</button>
+          <button class="option-btn" onclick="selectDevOption('q2','always',this)">Automated dependency scanning in CI/CD</button>
+        </div>
+      </div>
+
+      <!-- Dev Q3 -->
+      <div class="question-card" id="card-dq3">
+        <div class="question-number">Question 3 / 5</div>
+        <div class="question-text">Do you test on production or use production data in your dev environment?</div>
+        <div class="options">
+          <button class="option-btn" onclick="selectDevOption('q3','always',this)">Prod is the best test environment, it has real data</button>
+          <button class="option-btn" onclick="selectDevOption('q3','sometimes',this)">Only for 'quick' fixes, never goes wrong</button>
+          <button class="option-btn" onclick="selectDevOption('q3','never',this)">Strict environment separation, anonymised test data</button>
+        </div>
+      </div>
+
+      <!-- Dev Q4 -->
+      <div class="question-card" id="card-dq4">
+        <div class="question-number">Question 4 / 5</div>
+        <div class="question-text">What is your code review and branch protection setup?</div>
+        <div class="options">
+          <button class="option-btn" onclick="selectDevOption('q4','none',this)">I push directly to main, I trust myself</button>
+          <button class="option-btn" onclick="selectDevOption('q4','sometimes',this)">PRs exist but branch protection is off, approvals optional</button>
+          <button class="option-btn" onclick="selectDevOption('q4','always',this)">Required reviews, branch protection, signed commits</button>
+        </div>
+      </div>
+
+      <!-- Dev Q5 -->
+      <div class="question-card" id="card-dq5">
+        <div class="question-number">Question 5 / 5</div>
+        <div class="question-text">How do you handle error messages and stack traces in production?</div>
+        <div class="options">
+          <button class="option-btn" onclick="selectDevOption('q5','always',this)">Full stack traces shown to the user — helpful for debugging!</button>
+          <button class="option-btn" onclick="selectDevOption('q5','sometimes',this)">Detailed errors in staging, sometimes leaks to prod</button>
+          <button class="option-btn" onclick="selectDevOption('q5','never',this)">Generic user errors, full traces only in secure logs</button>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="dev-submit-btn" onclick="submitQuiz()" disabled>
+        Reveal My Code's Dark Fate 💀
+      </button>
+
+      <div id="dev-error-box" style="display:none;"
+           class="dev-error-box"
+           style="display:none;background:rgba(239,68,68,0.08);border:1.5px solid var(--danger);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;text-align:center;color:var(--danger);margin-top:1rem;">
+        <p id="dev-error-msg">Something went wrong. The compiler is also confused.</p>
+        <button onclick="retryQuiz()" style="margin-top:1rem;background:var(--danger);border:none;border-radius:var(--radius);color:#fff;cursor:pointer;font-size:0.9rem;font-weight:600;padding:0.6rem 1.5rem;">Try Again</button>
+      </div>
+    </div><!-- end #dev-quiz-section -->
+
+  </section>
+
+  <!-- ══ LOADING SECTION ═════════════════════════ -->
+  <section id="loading-section">
+    <span class="crystal-ball">🔮</span>
+    <p id="loading-msg">Consulting the cybersecurity cosmos...</p>
+  </section>
+
+  <!-- ══ RESULT SECTION ══════════════════════════ -->
+  <section id="result-section">
+
+    <!-- Score Banner -->
+    <div class="score-banner" id="score-banner">
+      <div class="score-number" id="score-display">0</div>
+      <div class="score-label">Cyber Risk Score / 100</div>
+      <div class="cyber-sign" id="cyber-sign-display"></div>
+      <div class="sign-description" id="sign-description"></div>
+    </div>
+
+    <!-- Roast Box -->
+    <div id="roast-box">
+      <span class="roast-icon">⚠️</span>
+      <span id="roast-text"></span>
+    </div>
+
+    <!-- Dimensions Grid (Normal User mode) -->
+    <div id="user-dimensions" class="section-title">📊 Your Cyber Dimensions</div>
+    <div class="dimensions-grid" id="user-dimensions-grid">
+
+      <div class="dimension-card">
+        <div class="dimension-title">🎣 Phishing Risk</div>
+        <div class="dimension-value" id="dim-phishing-pct">—</div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" id="dim-phishing-bar" style="background: var(--danger);"></div>
+        </div>
+      </div>
+
+      <div class="dimension-card">
+        <div class="dimension-title">🔐 Password Aura</div>
+        <div class="dimension-value">
+          <span class="badge" id="dim-password-badge">—</span>
+        </div>
+      </div>
+
+      <div class="dimension-card">
+        <div class="dimension-title">📶 Wi-Fi Karma</div>
+        <div class="dimension-value">
+          <span class="badge" id="dim-wifi-badge">—</span>
+        </div>
+      </div>
+
+      <div class="dimension-card">
+        <div class="dimension-title">🧲 Scam Magnet Level</div>
+        <div class="dimension-value">
+          <span class="badge" id="dim-scam-badge">—</span>
+        </div>
+      </div>
+
+      <div class="dimension-card" style="grid-column: 1 / -1;">
+        <div class="dimension-title">🚨 Data Leak Risk</div>
+        <div class="dimension-value">
+          <span class="badge" id="dim-leak-badge">—</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Dimensions Grid (Developer mode) — hidden by default -->
+    <div id="dev-dimensions-label" class="section-title" style="display:none;">📊 Your Code's Security Profile</div>
+    <div class="dimensions-grid" id="dev-dimensions-grid" style="display:none;">
+
+      <div class="dimension-card">
+        <div class="dimension-title">🔑 Secret Hygiene</div>
+        <div class="dimension-value">
+          <span class="badge" id="dim-secret-badge">—</span>
+        </div>
+      </div>
+
+      <div class="dimension-card">
+        <div class="dimension-title">📦 Dependency Health</div>
+        <div class="dimension-value">
+          <span class="badge" id="dim-deps-badge">—</span>
+        </div>
+      </div>
+
+      <div class="dimension-card">
+        <div class="dimension-title">🌍 Environment Discipline</div>
+        <div class="dimension-value">
+          <span class="badge" id="dim-env-badge">—</span>
+        </div>
+      </div>
+
+      <div class="dimension-card">
+        <div class="dimension-title">🔀 Code Integrity</div>
+        <div class="dimension-value">
+          <span class="badge" id="dim-integrity-badge">—</span>
+        </div>
+      </div>
+
+      <div class="dimension-card">
+        <div class="dimension-title">📢 Error Exposure</div>
+        <div class="dimension-value">
+          <span class="badge" id="dim-errors-badge">—</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Prophecies (Normal User mode) -->
+    <div class="section-title" id="user-prophecies-label" style="margin-top:0.5rem;">📜 Your Cyber Prophecies</div>
+    <div id="user-prophecies">
+    <div class="prophecy-card">
+      <div class="prophecy-icon">🎣</div>
+      <div class="prophecy-content">
+        <div class="prophecy-label">Phishing Prophecy</div>
+        <div class="prophecy-text" id="prop-phishing"></div>
+      </div>
+    </div>
+
+    <div class="prophecy-card">
+      <div class="prophecy-icon">🔑</div>
+      <div class="prophecy-content">
+        <div class="prophecy-label">Password Prophecy</div>
+        <div class="prophecy-text" id="prop-password"></div>
+      </div>
+    </div>
+
+    <div class="prophecy-card">
+      <div class="prophecy-icon">📶</div>
+      <div class="prophecy-content">
+        <div class="prophecy-label">Wi-Fi Destiny</div>
+        <div class="prophecy-text" id="prop-wifi"></div>
+      </div>
+    </div>
+
+    <div class="prophecy-card">
+      <div class="prophecy-icon">🚨</div>
+      <div class="prophecy-content">
+        <div class="prophecy-label">Data Prophecy</div>
+        <div class="prophecy-text" id="prop-dataleak"></div>
+      </div>
+    </div>
+
+    <div class="prophecy-card">
+      <div class="prophecy-icon">⭐</div>
+      <div class="prophecy-content">
+        <div class="prophecy-label">Daily Security Prophecy</div>
+        <div class="prophecy-text" id="prop-daily"></div>
+      </div>
+    </div>
+    </div><!-- end #user-prophecies -->
+
+    <!-- Prophecies (Developer mode) — hidden by default -->
+    <div class="section-title" id="dev-prophecies-label" style="margin-top:0.5rem;display:none;">📜 Your Code's Prophecies</div>
+    <div id="dev-prophecies" style="display:none;">
+    <div class="prophecy-card">
+      <div class="prophecy-icon">🔑</div>
+      <div class="prophecy-content">
+        <div class="prophecy-label">Secrets Prophecy</div>
+        <div class="prophecy-text" id="prop-secrets"></div>
+      </div>
+    </div>
+
+    <div class="prophecy-card">
+      <div class="prophecy-icon">📦</div>
+      <div class="prophecy-content">
+        <div class="prophecy-label">Dependencies Prophecy</div>
+        <div class="prophecy-text" id="prop-dependencies"></div>
+      </div>
+    </div>
+
+    <div class="prophecy-card">
+      <div class="prophecy-icon">🌍</div>
+      <div class="prophecy-content">
+        <div class="prophecy-label">Environment Prophecy</div>
+        <div class="prophecy-text" id="prop-environment"></div>
+      </div>
+    </div>
+
+    <div class="prophecy-card">
+      <div class="prophecy-icon">🔀</div>
+      <div class="prophecy-content">
+        <div class="prophecy-label">Code Integrity Prophecy</div>
+        <div class="prophecy-text" id="prop-code"></div>
+      </div>
+    </div>
+
+    <div class="prophecy-card">
+      <div class="prophecy-icon">📢</div>
+      <div class="prophecy-content">
+        <div class="prophecy-label">Error Exposure Prophecy</div>
+        <div class="prophecy-text" id="prop-errors"></div>
+      </div>
+    </div>
+
+    <div class="prophecy-card">
+      <div class="prophecy-icon">⭐</div>
+      <div class="prophecy-content">
+        <div class="prophecy-label">Daily Dev Prophecy</div>
+        <div class="prophecy-text" id="prop-dev-daily"></div>
+      </div>
+    </div>
+    </div><!-- end #dev-prophecies -->
+
+    <!-- Lucky Section -->
+    <div class="section-title" style="margin-top:1.5rem;">✨ Your Lucky Omens</div>
+    <div class="lucky-grid">
+      <div class="lucky-card charm">
+        <div class="lucky-title">✨ Lucky Security Charm</div>
+        <div class="lucky-charm-text" id="lucky-charm"></div>
+      </div>
+      <div class="lucky-card number">
+        <div class="lucky-title">🔢 Lucky Security Number</div>
+        <div class="lucky-number-val" id="lucky-number"></div>
+        <div class="lucky-note">(A well-known port number from the security world)</div>
+      </div>
+    </div>
+
+    <!-- CTAs -->
+    <div class="cta-row">
+      <button class="btn-secondary" onclick="resetQuiz()">Try Again 🔮</button>
+      <button class="btn-primary" onclick="shareResult()" style="margin-top:0;">Share My Fate 📤</button>
+    </div>
+
+  </section>
+
+  <footer>
+    <p>Built with ☁️ <strong>AWS Lambda</strong> + <strong>API Gateway</strong> + <strong>S3</strong> + <strong>CloudFront</strong></p>
+    <p>⚠️ No data is stored. This is for educational awareness only.</p>
+  </footer>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  /* ═══════════════════════════════════════════════════════════════
+     CONFIGURATION — Replace __API_ENDPOINT__ after sam deploy
+  ═══════════════════════════════════════════════════════════════ */
+  const API_ENDPOINT = "__API_ENDPOINT__";
+
+  /* ═══════════════════════════════════════════════════════════════
+     STATE
+  ═══════════════════════════════════════════════════════════════ */
+  let answers    = {};
+  let devAnswers = {};
+  let lastResult = null;
+  let currentMode = "user";  // "user" | "dev"
+
+  const LOADING_MESSAGES = [
+    "Consulting the cybersecurity cosmos...",
+    "Analysing your digital aura...",
+    "The stars are checking HaveIBeenPwned...",
+    "Mercury has entered your network traffic...",
+    "Decrypting your cyber destiny...",
+    "Querying the Oracle of Port 443...",
+  ];
+
+  const DEV_LOADING_MESSAGES = [
+    "Scanning your git history for secrets...",
+    "Running npm audit on your soul...",
+    "Consulting the OWASP Top 10 spirits...",
+    "Checking branch protection on your destiny...",
+    "Analysing your stack trace karma...",
+    "CVE database is reviewing your choices...",
+  ];
+
+  /* ═══════════════════════════════════════════════════════════════
+     STAR CANVAS BACKGROUND
+  ═══════════════════════════════════════════════════════════════ */
+  (function initStars() {
+    const canvas = document.getElementById('starCanvas');
+    const ctx = canvas.getContext('2d');
+    let stars = [];
+    const STAR_COUNT = 80;
+
+    function resize() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    function createStars() {
+      stars = [];
+      for (let i = 0; i < STAR_COUNT; i++) {
+        stars.push({
+          x:    Math.random() * canvas.width,
+          y:    Math.random() * canvas.height,
+          r:    Math.random() * 1.5 + 0.3,
+          dx:   (Math.random() - 0.5) * 0.12,
+          dy:   (Math.random() - 0.5) * 0.12,
+          alpha: Math.random() * 0.6 + 0.2,
+        });
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (const s of stars) {
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(148, 130, 200, ${s.alpha})`;
+        ctx.fill();
+
+        s.x += s.dx;
+        s.y += s.dy;
+
+        if (s.x < 0) s.x = canvas.width;
+        if (s.x > canvas.width) s.x = 0;
+        if (s.y < 0) s.y = canvas.height;
+        if (s.y > canvas.height) s.y = 0;
+      }
+      requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('resize', () => { resize(); createStars(); });
+    resize();
+    createStars();
+    draw();
+  })();
+
+  /* ═══════════════════════════════════════════════════════════════
+     MODE TOGGLE — v2.0.0
+  ═══════════════════════════════════════════════════════════════ */
+  function toggleMode() {
+    currentMode = currentMode === "user" ? "dev" : "user";
+    const toggle = document.getElementById('mode-toggle');
+    toggle.dataset.mode = currentMode;
+    toggle.setAttribute('aria-checked', currentMode === 'dev' ? 'true' : 'false');
+    toggle.setAttribute('aria-label', currentMode === 'dev' ? 'Switch to Normal User mode' : 'Switch to Developer mode');
+
+    const userSection = document.getElementById('user-quiz-section');
+    const devSection  = document.getElementById('dev-quiz-section');
+    userSection.style.display = currentMode === 'user' ? 'block' : 'none';
+    devSection.style.display  = currentMode === 'dev'  ? 'block' : 'none';
+
+    // Toggle body class for dev accent colours
+    document.body.classList.toggle('dev-mode', currentMode === 'dev');
+
+    // Update header tagline
+    const tagline = document.querySelector('header .tagline');
+    tagline.textContent = currentMode === 'dev'
+      ? '🖥️ Developer Mode — Your Code\'s Dark Fate'
+      : 'Your Daily Security Fate — Laugh First, Learn to Protect Yourself Second';
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     QUIZ INTERACTION
+  ═══════════════════════════════════════════════════════════════ */
+  function selectOption(questionId, value, btn) {
+    const card = document.getElementById('card-' + questionId);
+    card.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    answers[questionId] = value;
+
+    if (Object.keys(answers).length === 5) {
+      document.getElementById('submit-btn').disabled = false;
+    }
+  }
+
+  function selectDevOption(questionId, value, btn) {
+    const card = document.getElementById('card-d' + questionId);
+    card.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    devAnswers[questionId] = value;
+
+    if (Object.keys(devAnswers).length === 5) {
+      document.getElementById('dev-submit-btn').disabled = false;
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     QUIZ SUBMIT
+  ═══════════════════════════════════════════════════════════════ */
+  async function submitQuiz() {
+    document.getElementById('quiz-section').style.display = 'none';
+    document.getElementById('error-box').style.display = 'none';
+    document.getElementById('dev-error-box').style.display = 'none';
+    document.getElementById('loading-section').style.display = 'block';
+    document.getElementById('result-section').style.display = 'none';
+
+    const submittedAnswers = currentMode === 'dev' ? devAnswers : answers;
+
+    // Rotate loading messages
+    let msgIdx = 0;
+    const msgEl = document.getElementById('loading-msg');
+    const msgs = currentMode === 'dev'
+      ? DEV_LOADING_MESSAGES
+      : LOADING_MESSAGES;
+    msgEl.textContent = msgs[0];
+    const msgInterval = setInterval(() => {
+      msgIdx = (msgIdx + 1) % msgs.length;
+      msgEl.style.opacity = '0';
+      setTimeout(() => {
+        msgEl.textContent = msgs[msgIdx];
+        msgEl.style.opacity = '1';
+      }, 200);
+    }, 800);
+
+    try {
+      const res = await fetch(API_ENDPOINT + '/horoscope', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers: submittedAnswers, mode: currentMode }),
+      });
+
+      clearInterval(msgInterval);
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      lastResult = data;
+      displayResult(data);
+
+    } catch (err) {
+      clearInterval(msgInterval);
+      document.getElementById('loading-section').style.display = 'none';
+      document.getElementById('quiz-section').style.display = 'block';
+      const errMsgId  = currentMode === 'dev' ? 'dev-error-msg'  : 'error-msg';
+      const errBoxId  = currentMode === 'dev' ? 'dev-error-box'  : 'error-box';
+      document.getElementById(errMsgId).textContent =
+        (currentMode === 'dev' ? 'The compiler is also confused: ' : 'The cybersecurity cosmos is temporarily misaligned: ')
+        + err.message;
+      document.getElementById(errBoxId).style.display = 'block';
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     DISPLAY RESULT
+  ═══════════════════════════════════════════════════════════════ */
+  function displayResult(data) {
+    document.getElementById('loading-section').style.display = 'none';
+
+    const isDevMode = data.mode === 'dev';
+
+    // Score banner colour
+    const banner = document.getElementById('score-banner');
+    banner.classList.remove('score-low', 'score-medium', 'score-high');
+    if (data.final_score <= 30) banner.classList.add('score-low');
+    else if (data.final_score <= 60) banner.classList.add('score-medium');
+    else banner.classList.add('score-high');
+
+    // Cyber sign
+    document.getElementById('cyber-sign-display').textContent =
+      data.cyber_sign_emoji + ' ' + data.cyber_sign;
+    document.getElementById('sign-description').textContent = data.cyber_sign_description;
+
+    // Roast box
+    const roastBox = document.getElementById('roast-box');
+    if (data.roast_message) {
+      document.getElementById('roast-text').textContent = data.roast_message;
+      roastBox.style.display = 'block';
+    } else {
+      roastBox.style.display = 'none';
+    }
+
+    if (isDevMode) {
+      // ── Dev mode dimensions ───────────────────────────────────────────────
+      document.getElementById('user-dimensions').style.display       = 'none';
+      document.getElementById('user-dimensions-grid').style.display  = 'none';
+      document.getElementById('dev-dimensions-label').style.display  = 'block';
+      document.getElementById('dev-dimensions-grid').style.display   = 'grid';
+
+      const d = data.dimensions;
+      setDevBadge('dim-secret-badge',    d.secret_hygiene);
+      setDevBadge('dim-deps-badge',      d.dependency_health);
+      setDevBadge('dim-env-badge',       d.environment_discipline);
+      setDevBadge('dim-integrity-badge', d.code_integrity);
+      setDevBadge('dim-errors-badge',    d.error_exposure);
+
+      // ── Dev mode prophecies ───────────────────────────────────────────────
+      document.getElementById('user-prophecies-label').style.display = 'none';
+      document.getElementById('user-prophecies').style.display       = 'none';
+      document.getElementById('dev-prophecies-label').style.display  = 'block';
+      document.getElementById('dev-prophecies').style.display        = 'block';
+
+      document.getElementById('prop-secrets').textContent      = data.prophecies.secrets;
+      document.getElementById('prop-dependencies').textContent = data.prophecies.dependencies;
+      document.getElementById('prop-environment').textContent  = data.prophecies.environment;
+      document.getElementById('prop-code').textContent         = data.prophecies.code;
+      document.getElementById('prop-errors').textContent       = data.prophecies.errors;
+      document.getElementById('prop-dev-daily').textContent    = data.prophecies.daily;
+
+    } else {
+      // ── User mode dimensions ──────────────────────────────────────────────
+      document.getElementById('user-dimensions').style.display       = 'block';
+      document.getElementById('user-dimensions-grid').style.display  = 'grid';
+      document.getElementById('dev-dimensions-label').style.display  = 'none';
+      document.getElementById('dev-dimensions-grid').style.display   = 'none';
+
+      const d = data.dimensions;
+      document.getElementById('dim-phishing-pct').textContent = d.phishing_risk_pct + '%';
+      setBadge('dim-password-badge', d.password_aura);
+      setBadge('dim-wifi-badge',     d.wifi_karma);
+      setBadge('dim-scam-badge',     d.scam_magnet_level);
+      setBadge('dim-leak-badge',     d.data_leak_risk);
+
+      // ── User mode prophecies ──────────────────────────────────────────────
+      document.getElementById('user-prophecies-label').style.display = 'block';
+      document.getElementById('user-prophecies').style.display       = 'block';
+      document.getElementById('dev-prophecies-label').style.display  = 'none';
+      document.getElementById('dev-prophecies').style.display        = 'none';
+
+      document.getElementById('prop-phishing').textContent  = data.prophecies.phishing;
+      document.getElementById('prop-password').textContent  = data.prophecies.password;
+      document.getElementById('prop-wifi').textContent      = data.prophecies.wifi;
+      document.getElementById('prop-dataleak').textContent  = data.prophecies.data_leak;
+      document.getElementById('prop-daily').textContent     = data.prophecies.daily;
+
+      // Animate phishing progress bar (user mode only)
+      setTimeout(() => {
+        const bar = document.getElementById('dim-phishing-bar');
+        const pct = d.phishing_risk_pct;
+        bar.style.background = pct >= 60 ? 'var(--danger)' : pct >= 30 ? 'var(--warning)' : 'var(--success)';
+        bar.style.width = pct + '%';
+      }, 200);
+    }
+
+    // Lucky section (shared)
+    document.getElementById('lucky-charm').textContent  = data.lucky_security_charm;
+    document.getElementById('lucky-number').textContent = data.lucky_security_number;
+
+    // Show result section
+    const resultSec = document.getElementById('result-section');
+    resultSec.style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Animate score count-up
+    animateCount('score-display', 0, data.final_score, 1500);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     BADGE HELPER — assigns colour class based on severity label
+  ═══════════════════════════════════════════════════════════════ */
+  const DANGER_LABELS  = new Set(['Catastrophic','Suicidal','Irresistible','Certain']);
+  const WARNING_LABELS = new Set(['Weak','Reckless','Attractive','High','Moderate']);
+  const SUCCESS_LABELS = new Set(['Legendary','Strong','Pristine','Repellent','Minimal','Low']);
+
+  function setBadge(id, label) {
+    const el = document.getElementById(id);
+    el.textContent = label;
+    el.className = 'badge';
+    if (DANGER_LABELS.has(label))       el.classList.add('badge-red');
+    else if (WARNING_LABELS.has(label)) el.classList.add('badge-yellow');
+    else if (SUCCESS_LABELS.has(label)) el.classList.add('badge-green');
+    else                                el.classList.add('badge-purple');
+  }
+
+  // Dev badge label → colour mapping
+  const DEV_DANGER_LABELS  = new Set(['GitHub Search Nightmare','CVE Buffet','Prod is Dev','Yolo Push','Stack Trace as a Feature']);
+  const DEV_WARNING_LABELS = new Set(['Questionable','Probably Fine','Casual Chaos','Loosely Gated','Occasionally Chatty']);
+  const DEV_SUCCESS_LABELS = new Set(['Immaculate','Fort Knox','Textbook','Signed & Sealed','Silent & Secure']);
+
+  function setDevBadge(id, label) {
+    const el = document.getElementById(id);
+    el.textContent = label;
+    el.className = 'badge';
+    if (DEV_DANGER_LABELS.has(label))       el.classList.add('badge-red');
+    else if (DEV_WARNING_LABELS.has(label)) el.classList.add('badge-yellow');
+    else if (DEV_SUCCESS_LABELS.has(label)) el.classList.add('badge-green');
+    else                                    el.classList.add('badge-purple');
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     ANIMATE COUNT-UP
+  ═══════════════════════════════════════════════════════════════ */
+  function animateCount(elementId, from, to, duration) {
+    const el = document.getElementById(elementId);
+    const start = performance.now();
+    function step(now) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.round(from + (to - from) * eased);
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     RESET QUIZ
+  ═══════════════════════════════════════════════════════════════ */
+  function resetQuiz() {
+    answers    = {};
+    devAnswers = {};
+    lastResult = null;
+
+    // Clear selections
+    document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('submit-btn').disabled     = true;
+    document.getElementById('dev-submit-btn').disabled = true;
+    document.getElementById('error-box').style.display     = 'none';
+    document.getElementById('dev-error-box').style.display = 'none';
+
+    // Reset phishing bar
+    const bar = document.getElementById('dim-phishing-bar');
+    bar.style.width = '0%';
+
+    document.getElementById('result-section').style.display = 'none';
+    document.getElementById('quiz-section').style.display   = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function retryQuiz() {
+    document.getElementById('error-box').style.display     = 'none';
+    document.getElementById('dev-error-box').style.display = 'none';
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     SHARE RESULT
+  ═══════════════════════════════════════════════════════════════ */
+  function shareResult() {
+    if (!lastResult) return;
+    const r = lastResult;
+    const url = window.location.href.split('?')[0];
+    const shareText =
+      `🔮 My Cyber Fate: ${r.final_score}/100 — ${r.cyber_sign_emoji} ${r.cyber_sign}\n` +
+      `"${r.prophecies.daily}"\n` +
+      `⭐ Lucky Charm: ${r.lucky_security_charm}\n` +
+      `\nFind your own fate at: ${url}`;
+
+    if (navigator.share) {
+      navigator.share({ title: 'My CyberHoroscope', text: shareText })
+        .catch(() => copyToClipboard(shareText));
+    } else {
+      copyToClipboard(shareText);
+    }
+  }
+
+  function copyToClipboard(text) {
+    navigator.clipboard.writeText(text)
+      .then(() => showToast('📋 Copied to clipboard!'))
+      .catch(() => showToast('⚠️ Could not copy — please copy manually'));
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     TOAST NOTIFICATION
+  ═══════════════════════════════════════════════════════════════ */
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2800);
+  }
+</script>
+</body>
+</html>

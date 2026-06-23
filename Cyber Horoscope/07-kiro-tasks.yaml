@@ -1,0 +1,180 @@
+kiro_tasks:
+  description: |
+    This file tells Kiro exactly what to generate, in what order, and what each output
+    file should contain. Upload all YAML files in this package to Kiro together.
+    Kiro should process this file last, after reading all spec files, then generate
+    every file listed below.
+
+  project_root_structure: |
+    cyber-horoscope/
+    ├── template.yaml              # SAM infrastructure template
+    ├── samconfig.toml             # SAM deploy config (auto-filled)
+    ├── src/
+    │   ├── __init__.py
+    │   ├── handler.py             # Lambda entry point
+    │   ├── horoscope_engine.py    # Scoring + horoscope generation
+    │   ├── content.py             # All prophecy / roast strings
+    │   └── validator.py           # Input validation
+    ├── tests/
+    │   ├── __init__.py
+    │   └── test_horoscope_engine.py
+    ├── frontend/
+    │   └── index.html             # Single-file SPA
+    ├── scripts/
+    │   └── deploy_frontend.sh     # S3 upload + CloudFront invalidation helper
+    └── README.md
+
+  generation_tasks:
+
+    - task_id: T01
+      name: Generate SAM Template
+      output_file: template.yaml
+      source_specs: [03-aws-architecture.yaml]
+      instructions: |
+        Generate a complete AWS SAM template.yaml using Transform: AWS::Serverless-2016-10-31.
+        Include:
+        - CyberHoroscopeFunction (python3.12, arm64, 128MB, 10s timeout, X-Ray tracing)
+        - HttpApi with CORS (allow all origins)
+        - POST /horoscope and GET /health routes
+        - FrontendBucket (S3, block public access)
+        - CloudFrontDistribution (OAC, HTTPS only, PriceClass_100)
+        - BucketPolicy allowing CloudFront OAC read access
+        - Outputs: ApiEndpoint, FrontendURL, BucketName
+        - Parameters: Stage (dev/prod, default prod)
+        All resource names must be consistent and deterministic.
+        Use !Sub for any string interpolation referencing AWS::AccountId or AWS::Region.
+
+    - task_id: T02
+      name: Generate samconfig.toml
+      output_file: samconfig.toml
+      instructions: |
+        Generate a samconfig.toml with:
+        [default.deploy.parameters]
+        stack_name = "cyber-horoscope"
+        region = "ap-south-1"
+        confirm_changeset = true
+        capabilities = "CAPABILITY_IAM"
+        resolve_s3 = true
+
+    - task_id: T03
+      name: Generate Lambda handler
+      output_file: src/handler.py
+      source_specs: [05-lambda-code-spec.yaml]
+      instructions: |
+        Generate handler.py exactly as specified in lambda_code_spec.handler_py.
+        Include docstrings. Use structured logging (not print statements).
+        The _response helper must always include CORS headers.
+        Handle both POST /horoscope and GET /health routes by inspecting event["routeKey"].
+
+    - task_id: T04
+      name: Generate validator
+      output_file: src/validator.py
+      source_specs: [05-lambda-code-spec.yaml]
+      instructions: |
+        Generate validator.py with validate_answers() as specified.
+        VALID_ANSWERS dict must match the exact option values in 02-functional-spec.yaml.
+        Return None on success, descriptive string on failure.
+        No external imports.
+
+    - task_id: T05
+      name: Generate content module
+      output_file: src/content.py
+      source_specs: [02-functional-spec.yaml]
+      instructions: |
+        Generate content.py containing the CONTENT dict.
+        Populate ALL content pools from 02-functional-spec.yaml:
+          - phishing_prophecies: {high: [...], medium: [...], low: [...]}
+          - password_prophecies: {high: [...], medium: [...], low: [...]}
+          - wifi_prophecies: {high: [...], medium: [...], low: [...]}
+          - data_leak_prophecies: {high: [...], medium: [...], low: [...]}
+          - daily_security_prophecies: [...]
+          - lucky_security_charms: [...]
+          - lucky_security_numbers: [...]
+          - roast_mode: {messages: [...]}
+        Each list must have at least 3 entries. Add additional creative entries
+        maintaining the same humor + educational tone. All entries must be original
+        and funny-but-informative (the user laughs, then learns something).
+
+    - task_id: T06
+      name: Generate horoscope engine
+      output_file: src/horoscope_engine.py
+      source_specs: [02-functional-spec.yaml, 05-lambda-code-spec.yaml]
+      instructions: |
+        Generate horoscope_engine.py with generate() and _map_to_label() as specified.
+        RISK_SCORES must match 02-functional-spec.yaml quiz.questions.options.risk_score exactly.
+        RAW_MAX = 120.
+        final_score = round((raw_score / 120) * 100).
+        Dimension score derivation must follow the logic in 05-lambda-code-spec.yaml.
+        Use random.choice() for all content selection.
+        Roast triggered when final_score >= 70.
+        generated_at must be UTC ISO8601 ending in "Z".
+
+    - task_id: T07
+      name: Generate unit tests
+      output_file: tests/test_horoscope_engine.py
+      source_specs: [05-lambda-code-spec.yaml]
+      instructions: |
+        Generate pytest test file.
+        Include all test cases listed in 05-lambda-code-spec.yaml tests.cases.
+        Also add:
+        - test_generated_at_format: assert result["generated_at"].endswith("Z")
+        - test_lucky_number_is_valid: assert result["lucky_security_number"] in [404, 443, 1337, 8080, 256, 2048, 3389]
+        - test_response_200_structure: mock Lambda event, call lambda_handler, assert statusCode == 200
+        Do not mock random — deterministic checks use boundary inputs.
+        Use pytest fixtures for common answer sets.
+
+    - task_id: T08
+      name: Generate frontend
+      output_file: frontend/index.html
+      source_specs: [06-frontend-spec.yaml, 02-functional-spec.yaml]
+      instructions: |
+        Generate a complete single-file HTML page.
+        Import from Google Fonts: Orbitron, Inter, Cinzel (via <link>).
+        All CSS inline in <style> tag. All JS inline in <script> tag.
+        No external JS frameworks (no React, no Vue, no jQuery).
+        The API endpoint must be set via a JS const at the top:
+          const API_ENDPOINT = "__API_ENDPOINT__";
+        Kiro should note that this placeholder gets replaced after sam deploy outputs the URL.
+        Implement all sections and functions from 06-frontend-spec.yaml.
+        The page must work entirely offline (except the API call) — no CDN JS dependencies.
+        Star particle background: implement as a <canvas> element behind content,
+        with 80 randomly positioned small dots animated to drift slowly.
+        Score colour transitions: CSS class swap (score-low / score-medium / score-high).
+        Make the page mobile-responsive (single column on < 640px).
+
+    - task_id: T09
+      name: Generate deploy script
+      output_file: scripts/deploy_frontend.sh
+      instructions: |
+        Bash script that:
+        1. Reads BUCKET_NAME and CF_DIST_ID from sam deploy output (using aws cloudformation describe-stacks)
+        2. Reads the API endpoint URL from stack outputs
+        3. Replaces __API_ENDPOINT__ in frontend/index.html with the real URL (using sed)
+        4. Uploads the modified file to S3
+        5. Creates a CloudFront invalidation
+        6. Prints the live URL
+        Add set -e and helpful echo messages throughout.
+
+    - task_id: T10
+      name: Generate README
+      output_file: README.md
+      instructions: |
+        Generate a README.md covering:
+        - What the project does (1 paragraph, fun tone)
+        - Architecture diagram (ASCII)
+        - Prerequisites (AWS CLI, SAM CLI, Python 3.12)
+        - Quick start: sam build → sam deploy --guided → ./scripts/deploy_frontend.sh
+        - How scoring works (brief table of cyber signs)
+        - Demo tips for the hackathon judge presentation
+        - Cost estimate (free tier)
+        Keep it concise and readable. Judges will skim it.
+
+  post_generation_checklist:
+    - "[ ] All files generated and placed in correct paths"
+    - "[ ] template.yaml passes: sam validate"
+    - "[ ] Python files pass: python -m py_compile src/*.py"
+    - "[ ] Tests pass: pytest tests/ -v"
+    - "[ ] frontend/index.html opens in browser without errors (before API call)"
+    - "[ ] __API_ENDPOINT__ placeholder present and replaceable in index.html"
+    - "[ ] CORS headers present in all Lambda responses"
+    - "[ ] No hardcoded AWS account IDs or secrets in any file"

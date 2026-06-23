@@ -1,0 +1,244 @@
+frontend_spec:
+  file: frontend/index.html
+  type: single_file_html
+  description: |
+    Single HTML file (HTML + CSS + Vanilla JS — no frameworks, no build step).
+    Hosted on S3 + CloudFront. Must feel mystical/dark-theme like a real horoscope app.
+
+# ─────────────────────────────────────────────
+# VISUAL DESIGN
+# ─────────────────────────────────────────────
+design:
+  theme: dark_mystical_hacker
+  color_palette:
+    background: "#0a0a0f"       # near-black with blue tint
+    surface: "#12121e"           # card background
+    primary: "#7c3aed"           # deep violet — mystical
+    accent: "#06d6a0"            # cyber teal — tech feel
+    danger: "#ef4444"            # red — for high risk scores
+    warning: "#f59e0b"           # amber — medium risk
+    success: "#10b981"           # green — low risk
+    text_primary: "#f1f5f9"      # near white
+    text_secondary: "#94a3b8"    # slate
+    border: "#1e1e3a"
+
+  fonts:
+    heading: "'Orbitron', monospace"   # futuristic techy font (Google Fonts)
+    body: "'Inter', sans-serif"
+    prophecy: "'Cinzel', serif"        # mystical serif for the horoscope text
+
+  effects:
+    - glowing_border on active card (box-shadow with primary color)
+    - star_particle_background (CSS animation of small dots, subtle)
+    - fade_in on result reveal
+    - progress_bar animated fill for each dimension score
+    - pulsing crystal ball emoji on loading state
+
+# ─────────────────────────────────────────────
+# PAGE STRUCTURE
+# ─────────────────────────────────────────────
+layout:
+  sections:
+
+    header:
+      content: |
+        🔮 CYBER HOROSCOPE
+        Your Daily Security Fate
+      style: centered, Orbitron font, glowing violet text-shadow
+
+    quiz_section:
+      id: quiz-section
+      initially_visible: true
+      content:
+        - intro_text: "Answer 5 questions. The cybersecurity stars shall reveal your fate."
+        - question_cards: 5 cards, one per question (from functional spec)
+        - each_card:
+            - Question text (prominent)
+            - 3 option buttons (radio-button style, styled as glowing selections)
+            - Selected state: border glows in accent color
+        - submit_button:
+            label: "Reveal My Cyber Fate 🔮"
+            disabled_until: all 5 questions answered
+            style: full-width, violet gradient, large text
+            onclick: submitQuiz()
+
+    loading_section:
+      id: loading-section
+      initially_visible: false
+      content:
+        - animated_crystal_ball: "🔮" with CSS spin/pulse animation
+        - loading_messages: rotate through these with 800ms intervals:
+          - "Consulting the cybersecurity cosmos..."
+          - "Analysing your digital aura..."
+          - "The stars are checking HaveIBeenPwned..."
+          - "Mercury has entered your network traffic..."
+      show_on: form submit
+      hide_on: API response received
+
+    result_section:
+      id: result-section
+      initially_visible: false
+      show_on: API response received (fade in)
+
+      subsections:
+
+        score_banner:
+          content:
+            - large_score_number: final_score (animated count-up from 0)
+            - cyber_sign_display: emoji + sign name (e.g. "🧲 Phishing Magnet")
+            - sign_description: italic text
+            - score_colour_rule:
+                0-30: success (#10b981)
+                31-60: warning (#f59e0b)
+                61-100: danger (#ef4444)
+
+        roast_box:
+          id: roast-box
+          show_when: roast_message is not null
+          style: |
+            Red-bordered card with warning icon ⚠️
+            Bold red text, slightly larger font
+            Background: rgba(239, 68, 68, 0.1)
+
+        dimensions_grid:
+          layout: 2-column grid (1-column on mobile)
+          cards:
+            - title: "🎣 Phishing Risk"
+              value: phishing_risk_pct + "%"
+              visual: horizontal progress bar (coloured by value)
+            - title: "🔐 Password Aura"
+              value: password_aura (string label)
+              visual: coloured badge
+            - title: "📶 Wi-Fi Karma"
+              value: wifi_karma (string label)
+              visual: coloured badge
+            - title: "🧲 Scam Magnet Level"
+              value: scam_magnet_level (string label)
+              visual: coloured badge
+            - title: "🚨 Data Leak Risk"
+              value: data_leak_risk (string label)
+              visual: coloured badge
+
+        prophecies_section:
+          title: "📜 Your Cyber Prophecies"
+          style: mystical card, Cinzel font for prophecy text
+          cards:
+            - icon: "🎣"
+              label: "Phishing Prophecy"
+              text: prophecies.phishing
+            - icon: "🔑"
+              label: "Password Prophecy"
+              text: prophecies.password
+            - icon: "📶"
+              label: "Wi-Fi Destiny"
+              text: prophecies.wifi
+            - icon: "🚨"
+              label: "Data Prophecy"
+              text: prophecies.data_leak
+            - icon: "⭐"
+              label: "Daily Security Prophecy"
+              text: prophecies.daily
+
+        lucky_section:
+          layout: 2 side-by-side cards
+          cards:
+            - title: "✨ Lucky Security Charm"
+              text: lucky_security_charm
+              style: teal accent border — this is the KEY educational takeaway
+              emphasis: true  # slightly larger font, highlighted
+            - title: "🔢 Lucky Security Number"
+              text: lucky_security_number
+              note_text: "(A well-known port number from the security world)"
+
+        cta_section:
+          buttons:
+            - label: "Try Again 🔮"
+              action: resetQuiz()
+              style: secondary button
+            - label: "Share My Fate 📤"
+              action: shareResult()  # uses Web Share API or copies text to clipboard
+              style: primary button
+
+    footer:
+      content: |
+        Built with ☁️ AWS Lambda + API Gateway
+        ⚠️ No data is stored. This is for educational awareness only.
+
+# ─────────────────────────────────────────────
+# JAVASCRIPT BEHAVIOUR
+# ─────────────────────────────────────────────
+javascript:
+  constants:
+    API_ENDPOINT: "__API_ENDPOINT__"
+    # Kiro should replace this placeholder with the SAM output URL at deploy time
+    # Or read from a config variable at the top of the script
+
+  functions:
+
+    selectOption:
+      trigger: user clicks an option button
+      logic: |
+        1. Remove 'selected' class from all options in that question's group
+        2. Add 'selected' class to clicked button
+        3. Store answer: answers[questionId] = optionValue
+        4. Check if all 5 questions answered → enable submit button
+
+    submitQuiz:
+      trigger: submit button click
+      logic: |
+        1. Show loading section, hide quiz section
+        2. POST to API_ENDPOINT/horoscope with { answers }
+        3. On success: displayResult(data)
+        4. On error: show error message with retry button
+
+    displayResult:
+      trigger: successful API response
+      logic: |
+        1. Hide loading section
+        2. Populate all result fields from API response
+        3. Animate score count-up (0 → final_score over 1.5 seconds)
+        4. Animate progress bars (width 0% → actual % over 1 second)
+        5. Show/hide roast_box based on roast_message presence
+        6. Colour score_banner based on final_score range
+        7. Fade in result section
+
+    resetQuiz:
+      trigger: Try Again button
+      logic: |
+        1. Clear all selected options
+        2. Reset answers object
+        3. Disable submit button
+        4. Show quiz section, hide result section
+        5. Scroll to top
+
+    shareResult:
+      trigger: Share button
+      logic: |
+        shareText = `My Cyber Fate: ${final_score}/100 — ${cyber_sign} ${emoji}
+        ${prophecies.daily}
+        Try yours at: [URL]`
+
+        if (navigator.share):
+          navigator.share({ text: shareText })
+        else:
+          navigator.clipboard.writeText(shareText)
+          show toast: "Copied to clipboard!"
+
+    animateCount:
+      signature: "(elementId, from, to, duration)"
+      logic: |
+        Use requestAnimationFrame to count from `from` to `to`
+        over `duration` milliseconds. Update element text on each frame.
+
+# ─────────────────────────────────────────────
+# RESPONSIVE DESIGN
+# ─────────────────────────────────────────────
+responsive:
+  breakpoints:
+    mobile: max-width 640px
+    tablet: max-width 1024px
+  adjustments:
+    - dimensions_grid: 1 column on mobile
+    - question options: stack vertically on mobile
+    - font sizes: scale down by ~15% on mobile
+    - padding: reduce card padding on mobile

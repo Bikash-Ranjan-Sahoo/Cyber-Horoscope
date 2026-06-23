@@ -1,0 +1,235 @@
+architecture:
+  name: CyberHoroscope AWS Infrastructure
+  pattern: Serverless REST API + Static Hosting
+  diagram: |
+    [Browser / CloudFront]
+          │  HTTPS
+          ▼
+    [Amazon API Gateway — HTTP API]
+          │  POST /horoscope
+          ▼
+    [AWS Lambda — python3.12]
+          │  (pure in-memory computation, no DB calls)
+          ▼
+    [JSON Response → Browser]
+
+    Static Assets:
+    [S3 Bucket] ──CloudFront──▶ [Browser]
+
+# ─────────────────────────────────────────────
+# LAMBDA FUNCTION
+# ─────────────────────────────────────────────
+lambda:
+  function_name: CyberHoroscopeFunction
+  runtime: python3.12
+  handler: src/handler.lambda_handler
+  memory_mb: 128        # scoring is pure Python math — no need for more
+  timeout_seconds: 10
+  architecture: arm64   # Graviton2 — faster cold start, cheaper, greener
+
+  environment_variables:
+    LOG_LEVEL: INFO
+    APP_VERSION: "1.0.0"
+    # No secrets needed — no external calls
+
+  iam_role:
+    name: CyberHoroscopeLambdaRole
+    managed_policies:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    inline_policies: []   # no S3, no DynamoDB, no external services needed
+
+  layers: []              # standard library only — no dependencies to package
+
+  tracing: Active         # AWS X-Ray enabled for demo observability
+
+  reserved_concurrency: 10   # hackathon safety valve
+
+  code_structure:
+    src/handler.py:
+      responsibility: |
+        - Parse and validate API Gateway event
+        - Call horoscope_engine.generate()
+        - Return formatted JSON response with CORS headers
+      exports: [lambda_handler]
+
+    src/horoscope_engine.py:
+      responsibility: |
+        - Score quiz answers
+        - Determine cyber_sign from score thresholds
+        - Select prophecy strings from content pools (weighted random)
+        - Build and return horoscope dict
+      exports: [generate]
+
+    src/content.py:
+      responsibility: |
+        - All static content pools (prophecies, roasts, charms, lucky numbers)
+        - Kept separate so Kiro can regenerate content without touching logic
+      exports: [CONTENT]
+
+    src/validator.py:
+      responsibility: |
+        - Validate incoming JSON body (question IDs, option values)
+        - Return 400 with descriptive error if invalid
+      exports: [validate_answers]
+
+# ─────────────────────────────────────────────
+# API GATEWAY
+# ─────────────────────────────────────────────
+api_gateway:
+  type: HTTP API           # lighter & cheaper than REST API for this use case
+  name: CyberHoroscopeAPI
+  stage: prod
+  throttling:
+    rate_limit: 100        # requests per second
+    burst_limit: 200
+
+  routes:
+    - method: POST
+      path: /horoscope
+      integration: AWS_PROXY → CyberHoroscopeFunction
+      description: Submit quiz answers, receive personalised horoscope JSON
+
+    - method: GET
+      path: /health
+      integration: AWS_PROXY → CyberHoroscopeFunction
+      description: Health check endpoint for demo reassurance
+
+  cors:
+    allow_origins:
+      - "*"                # hackathon: open for demo; tighten for production
+    allow_methods: [POST, GET, OPTIONS]
+    allow_headers: [Content-Type, X-Amz-Date, Authorization, X-Api-Key]
+    max_age: 300
+
+# ─────────────────────────────────────────────
+# STATIC FRONTEND HOSTING
+# ─────────────────────────────────────────────
+frontend_hosting:
+  s3_bucket:
+    name: cyber-horoscope-frontend-${AWS::AccountId}
+    versioning: false      # single static file, no need
+    public_access: blocked
+    website_hosting: false # served via CloudFront, not S3 website endpoint
+
+  cloudfront:
+    enabled: true
+    price_class: PriceClass_100   # US, Canada, Europe, India
+    default_root_object: index.html
+    https_only: true
+    cache_ttl_seconds: 300        # 5 min — fine for a hackathon
+
+# ─────────────────────────────────────────────
+# SAM TEMPLATE INSTRUCTIONS FOR KIRO
+# ─────────────────────────────────────────────
+sam_template:
+  file: template.yaml
+  transform: AWS::Serverless-2016-10-31
+
+  parameters:
+    - name: Stage
+      type: String
+      default: prod
+      allowed_values: [dev, prod]
+
+  globals:
+    Function:
+      Runtime: python3.12
+      Architectures: [arm64]
+      Timeout: 10
+      MemorySize: 128
+      Tracing: Active
+      Environment:
+        Variables:
+          LOG_LEVEL: INFO
+
+  resources:
+    CyberHoroscopeFunction:
+      type: AWS::Serverless::Function
+      properties:
+        CodeUri: src/
+        Handler: handler.lambda_handler
+        Events:
+          PostHoroscope:
+            type: HttpApi
+            properties:
+              Path: /horoscope
+              Method: POST
+          GetHealth:
+            type: HttpApi
+            properties:
+              Path: /health
+              Method: GET
+
+    FrontendBucket:
+      type: AWS::S3::Bucket
+      properties:
+        BucketName: !Sub "cyber-horoscope-frontend-${AWS::AccountId}"
+
+    CloudFrontDistribution:
+      type: AWS::CloudFront::Distribution
+      # OAC-based, serving from FrontendBucket
+
+  outputs:
+    - name: ApiEndpoint
+      description: API Gateway base URL
+      value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+    - name: FrontendURL
+      description: CloudFront URL for the frontend
+      value: !GetAtt CloudFrontDistribution.DomainName
+
+# ─────────────────────────────────────────────
+# DEPLOYMENT WORKFLOW (for Kiro to follow)
+# ─────────────────────────────────────────────
+deployment:
+  steps:
+    - name: install_sam_cli
+      command: "pip install aws-sam-cli"
+      skip_if: already_installed
+
+    - name: build
+      command: "sam build"
+      working_dir: project_root
+
+    - name: deploy_guided
+      command: "sam deploy --guided"
+      first_time_only: true
+      prompts:
+        stack_name: cyber-horoscope
+        region: ap-south-1
+        confirm_changeset: true
+        save_config: true
+
+    - name: deploy_subsequent
+      command: "sam deploy"
+      uses_saved_config: true
+
+    - name: upload_frontend
+      command: |
+        aws s3 cp frontend/index.html s3://cyber-horoscope-frontend-${ACCOUNT_ID}/
+      note: "Replace ${ACCOUNT_ID} with actual AWS account ID from SAM outputs"
+
+    - name: invalidate_cache
+      command: |
+        aws cloudfront create-invalidation \
+          --distribution-id ${CF_DIST_ID} \
+          --paths "/*"
+      note: "Only needed after frontend updates"
+
+# ─────────────────────────────────────────────
+# ESTIMATED AWS COSTS (Free Tier)
+# ─────────────────────────────────────────────
+cost_estimate:
+  lambda:
+    free_tier: "1M requests/month + 400,000 GB-seconds"
+    expected_usage: "< 10,000 requests during hackathon"
+    cost: "$0.00"
+  api_gateway:
+    free_tier: "1M HTTP API calls/month for 12 months"
+    cost: "$0.00"
+  s3:
+    free_tier: "5GB storage, 20,000 GET, 2,000 PUT"
+    cost: "$0.00"
+  cloudfront:
+    free_tier: "1TB data transfer, 10M requests/month for 12 months"
+    cost: "$0.00"
+  total: "$0.00 — entirely within AWS Free Tier for hackathon scale"

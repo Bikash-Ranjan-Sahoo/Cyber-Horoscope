@@ -1,0 +1,69 @@
+project:
+  name: CyberHoroscope
+  tagline: "Your Daily Security Fate — Laugh First, Learn to Protect Yourself Second"
+  version: "1.0.0"
+  type: serverless-web-application
+  cloud_provider: AWS
+  hackathon_mode: true
+
+description: |
+  CyberHoroscope is a gamified cybersecurity awareness tool disguised as a daily horoscope.
+  Users answer 5 questions about their online habits. A Lambda function scores their responses
+  and returns a personalised horoscope containing funny-but-educational predictions about
+  phishing risk, password strength, Wi-Fi karma, and more.
+  No database required. Fully serverless. Demoed live in under 60 seconds.
+
+goals:
+  primary: Make cybersecurity awareness engaging and memorable through humor
+  secondary:
+    - Demonstrate pure serverless architecture on AWS
+    - Zero cold-start friction — no login, no account creation
+    - Live-demo friendly: input → output in under 3 seconds
+
+non_goals:
+  - Storing user data or answers
+  - Real threat intelligence or actual security scanning
+  - User authentication or accounts
+
+target_audience:
+  - Hackathon judges
+  - General public (non-technical)
+  - Corporate security-awareness trainers (secondary)
+
+success_metrics:
+  - User completes quiz in under 60 seconds
+  - Horoscope output makes the user laugh AND learn one security tip
+  - End-to-end latency under 3 seconds (p99)
+  - Zero external API dependencies (fully self-contained Lambda logic)
+
+constraints:
+  budget: free_tier_only
+  database: none
+  authentication: none
+  external_apis: none_required
+  regions:
+    primary: ap-south-1   # Mumbai — closest to demo location
+    fallback: us-east-1
+
+tech_stack:
+  frontend:
+    type: single_page_application
+    language: HTML + Vanilla JS + CSS
+    hosting: Amazon S3 + CloudFront
+    framework: none  # keep it hackathon-simple
+  backend:
+    runtime: python3.12
+    service: AWS Lambda
+    trigger: Amazon API Gateway (HTTP API)
+    iam: least-privilege execution role
+  infrastructure_as_code:
+    tool: AWS SAM (Serverless Application Model)
+    template_file: template.yaml
+
+deliverables:
+  - Kiro-generated SAM template (template.yaml)
+  - Lambda handler (src/handler.py)
+  - Horoscope engine (src/horoscope_engine.py)
+  - Static frontend (frontend/index.html)
+  - API spec (openapi.yaml)
+  - This requirements file

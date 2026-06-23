@@ -1,0 +1,272 @@
+dev_mode_backend_changes:
+  description: |
+    Exact surgical changes to make to each existing Python file.
+    Every change is an ADDITION. No existing code is modified or deleted.
+    Instructions are written so Kiro can apply them as targeted edits.
+
+# ─────────────────────────────────────────────
+# FILE: src/content.py
+# ACTION: Append DEV_CONTENT dict at the bottom
+# ─────────────────────────────────────────────
+content_py:
+  change: APPEND_TO_END
+  do_not_touch: CONTENT  # the existing dict — leave completely alone
+  append: |
+    # ── Developer Mode Content ──────────────────────────────────────────────────
+    # Added in v2.0.0. The CONTENT dict above is unchanged.
+    # Populate all lists from 09-dev-mode-content.yaml dev_content_pools section.
+
+    DEV_CONTENT = {
+        "secret_prophecies": {
+            "high": [
+                "A GitHub Actions bot has already found your AWS key. It emailed the billing team.",
+                "Your .env file has been committed, pushed, and indexed by three search engines.",
+                "The spirits warn: 'AWS_SECRET_KEY=supersecret123' is not a secret. It is a confession.",
+                "A threat actor is thanking you in their group chat for the hardcoded Stripe key.",
+            ],
+            "medium": [
+                "Your config file sits one accidental git add away from infamy. Back away slowly.",
+                "The cosmos sees a secret living where it should not. Move it to a secrets manager today.",
+            ],
+            "low": [
+                "Your secrets are sealed, rotated, and properly stored. The dark web has given up on you.",
+            ],
+        },
+        "dependency_prophecies": {
+            "high": [
+                "node_modules contains 47 transitive dependencies last updated in 2019. Three are sentient.",
+                "A critical CVE in your auth library was patched six months ago. You were never informed.",
+                "npm audit returns 1,337 vulnerabilities. You have chosen to ignore all of them. Bold.",
+                "The stars align on Log4Shell energy. Your dependency tree is a historical artefact.",
+            ],
+            "medium": [
+                "A moderate CVE in your ORM awaits your attention. It is not urgent. It is also not not urgent.",
+                "Dependabot has opened 14 PRs since January. They are patient. You should not be.",
+            ],
+            "low": [
+                "Your dependencies are patched, pinned, and scanned. Supply chain attackers have moved on.",
+            ],
+        },
+        "environment_prophecies": {
+            "high": [
+                "You ran a DELETE query on prod thinking it was staging. The database remembers.",
+                "A real customer's email address is sitting in your local dev logs. GDPR is watching.",
+                "The prod database is your rubber duck. This is not the intended use of a rubber duck.",
+                "You will push console.log('PROD DATA:', user) to production today. The stars have seen it.",
+            ],
+            "medium": [
+                "A quick prod test awaits today. It will not be quick. Nothing is ever quick in prod.",
+                "The line between staging and production grows thin. Reinforce it today.",
+            ],
+            "low": [
+                "Your environments are isolated, your test data anonymised. DevOps angels watch over you.",
+            ],
+        },
+        "code_integrity_prophecies": {
+            "high": [
+                "You pushed directly to main at 4:59 PM on a Friday. The deployment pipeline felt it.",
+                "A force push has overwritten a colleague's work. They have not noticed yet.",
+                "The spirits see a commit message that says 'fix'. It is unclear what was fixed.",
+                "Branch protection is off. This is fine. Everything is fine. (It is not fine.)",
+            ],
+            "medium": [
+                "A PR sits unreviewed for its third day. The code inside ages like milk, not wine.",
+                "Your branch protection rules have exceptions. Someone will exploit one today.",
+            ],
+            "low": [
+                "Your commits are signed, your PRs reviewed, your main branch protected. You may rest.",
+            ],
+        },
+        "error_exposure_prophecies": {
+            "high": [
+                "Your 500 error page contains a full stack trace, the DB schema, and your home IP.",
+                "A curious user found your /debug endpoint. It is not password protected. They are taking notes.",
+                "The exception message 'NullPointerException at UserService.java:247' has been screenshot.",
+                "Your error logs are public. A penetration tester is reading them right now and smiling.",
+            ],
+            "medium": [
+                "A verbose error message will slip through to production today. It will contain more than intended.",
+                "Your staging errors are detailed. Your prod errors are sometimes also detailed. Sometimes.",
+            ],
+            "low": [
+                "Your errors are generic to users and detailed only in secured logs. Attackers learn nothing.",
+            ],
+        },
+        "daily_dev_prophecies": [
+            "A dependency you have never heard of is responsible for 40% of your attack surface. Run npm audit.",
+            "Someone will push credentials to a public repo today. The stars hope it is not you.",
+            "Mercury is in CVE retrograde. Do not deploy today without reading the changelog.",
+            "An intern will ask why the API key is in the README. You will not have a good answer.",
+            "A forgotten S3 bucket left public in 2022 will resurface today. Check your AWS console.",
+            "Your Docker image runs as root. The container security gods are disappointed but not surprised.",
+            "A SQL query built by string concatenation is waiting for its moment. Use parameterised queries.",
+            "The .gitignore file has a gap. It always has a gap. Today you will find it.",
+            "CORS is set to '*' somewhere in your codebase. It is waving at everyone.",
+            "The ghost of a deleted branch still lives in someone's local clone. It contains secrets.",
+        ],
+        "lucky_dev_charms": [
+            "Run truffleHog or git-secrets to scan your repo history for leaked credentials.",
+            "Enable Dependabot on your repo — automated dependency PRs take 5 minutes to set up.",
+            "Add branch protection to main: require at least 1 review and passing CI before merge.",
+            "Move all secrets to AWS Secrets Manager or Parameter Store and rotate them today.",
+            "Add 'npm audit --audit-level=high' as a required CI step to block deploys on critical CVEs.",
+            "Set up separate AWS accounts for dev, staging, and prod under AWS Organizations.",
+            "Add a generic error handler: log full traces internally, return only a reference ID to users.",
+            "Enable CloudTrail in your AWS account — it records every API call free for 90 days.",
+            "Run trivy or docker scout on your container images before pushing to prod.",
+            "Sign your commits with GPG — GitHub shows a Verified badge and setup takes 10 minutes.",
+        ],
+        "lucky_dev_numbers": [443, 22, 8080, 3306, 9200, 1337, 4040, 6379],
+        "dev_roast_messages": [
+            "The OWASP Top 10 is not a bucket list. And yet here we are.",
+            "Three CVEs, two prod incidents, and one hardcoded password walk into a bar. The bartender is your CTO.",
+            "Security researchers have bookmarked your GitHub. Not as a reference. As a cautionary tale.",
+            "Your application has been pentested by accident — a script kiddie stumbled in and left a note.",
+            "The words 'it works on my machine' have been entered as evidence.",
+        ],
+    }
+
+# ─────────────────────────────────────────────
+# FILE: src/validator.py
+# ACTION: Add DEV_VALID_ANSWERS + update function signature
+# ─────────────────────────────────────────────
+validator_py:
+  change: ADD_CONSTANT_AND_UPDATE_SIGNATURE
+  existing_constant: VALID_ANSWERS   # do not touch
+  add_after_existing_constant: |
+    # Developer mode valid answers — added v2.0.0
+    DEV_VALID_ANSWERS = {
+        "q1": ["always", "sometimes", "never"],
+        "q2": ["never", "sometimes", "always"],
+        "q3": ["always", "sometimes", "never"],
+        "q4": ["none", "sometimes", "always"],
+        "q5": ["always", "sometimes", "never"],
+    }
+
+  update_function_signature:
+    old: "def validate_answers(answers: dict) -> str | None:"
+    new: "def validate_answers(answers: dict, mode: str = 'user') -> str | None:"
+    body_change: |
+      Add at the top of the function body, before existing logic:
+        valid_map = DEV_VALID_ANSWERS if mode == "dev" else VALID_ANSWERS
+      Then replace all references to VALID_ANSWERS inside the function with valid_map.
+      The rest of the validation logic is identical.
+
+# ─────────────────────────────────────────────
+# FILE: src/horoscope_engine.py
+# ACTION: Add DEV_RISK_SCORES, DEV_CYBER_SIGNS, and generate_dev()
+# ─────────────────────────────────────────────
+horoscope_engine_py:
+  change: APPEND_TO_END
+  do_not_touch: [RISK_SCORES, RAW_MAX, CYBER_SIGNS, generate, _map_to_label]
+  append: |
+    # ── Developer Mode Engine ───────────────────────────────────────────────────
+    # Added in v2.0.0. Everything above this line is unchanged.
+
+    DEV_RISK_SCORES = {
+        "q1": {"always": 30, "sometimes": 15, "never": 0},
+        "q2": {"never": 25, "sometimes": 12, "always": 0},
+        "q3": {"always": 25, "sometimes": 12, "never": 0},
+        "q4": {"none": 20, "sometimes": 10, "always": 0},
+        "q5": {"always": 20, "sometimes": 10, "never": 0},
+    }
+
+    DEV_RAW_MAX = 120  # 30+25+25+20+20
+
+    DEV_CYBER_SIGNS = [
+        {"threshold": 20,  "sign": "Zero Trust Architect",     "emoji": "🏰", "description": "Your codebase is a fortress. Security engineers weep with joy."},
+        {"threshold": 40,  "sign": "Dependency Guardian",      "emoji": "🛡️", "description": "You patch things before they become CVEs. Rare energy."},
+        {"threshold": 60,  "sign": "The Merge Conflict",       "emoji": "⚠️", "description": "Your intentions are good. Your .env file tells a different story."},
+        {"threshold": 80,  "sign": "Prod Cowboy",              "emoji": "🤠", "description": "You deploy on Fridays. You test on prod. You live dangerously."},
+        {"threshold": 100, "sign": "Supply Chain Catastrophe", "emoji": "💀", "description": "Your npm install is a threat actor's favourite moment of the day."},
+    ]
+
+
+    def generate_dev(answers: dict) -> dict:
+        """Generate a developer-mode cyber horoscope. Added v2.0.0."""
+        raw_score = sum(DEV_RISK_SCORES[q][answers[q]] for q in DEV_RISK_SCORES)
+        final_score = round((raw_score / DEV_RAW_MAX) * 100)
+
+        sign_data = DEV_CYBER_SIGNS[-1]
+        for entry in DEV_CYBER_SIGNS:
+            if final_score <= entry["threshold"]:
+                sign_data = entry
+                break
+
+        # Dimension scores
+        secret_raw = DEV_RISK_SCORES["q1"][answers["q1"]]
+        secret_label = _map_to_label(secret_raw, {0: "Immaculate", 15: "Questionable", 30: "GitHub Search Nightmare"})
+
+        dep_raw = DEV_RISK_SCORES["q2"][answers["q2"]]
+        dep_label = _map_to_label(dep_raw, {0: "Fort Knox", 12: "Probably Fine", 25: "CVE Buffet"})
+
+        env_raw = DEV_RISK_SCORES["q3"][answers["q3"]]
+        env_label = _map_to_label(env_raw, {0: "Textbook", 12: "Casual Chaos", 25: "Prod is Dev"})
+
+        integrity_raw = DEV_RISK_SCORES["q4"][answers["q4"]]
+        integrity_label = _map_to_label(integrity_raw, {0: "Signed & Sealed", 10: "Loosely Gated", 20: "Yolo Push"})
+
+        error_raw = DEV_RISK_SCORES["q5"][answers["q5"]]
+        error_label = _map_to_label(error_raw, {0: "Silent & Secure", 10: "Occasionally Chatty", 20: "Stack Trace as a Feature"})
+
+        # Prophecy selection
+        secret_level = "high" if secret_raw >= 20 else ("medium" if secret_raw >= 10 else "low")
+        dep_level    = "high" if dep_raw    >= 20 else ("medium" if dep_raw    >= 10 else "low")
+        env_level    = "high" if env_raw    >= 20 else ("medium" if env_raw    >= 10 else "low")
+        int_level    = "high" if integrity_raw >= 15 else ("medium" if integrity_raw >= 8 else "low")
+        err_level    = "high" if error_raw  >= 15 else ("medium" if error_raw  >= 8  else "low")
+
+        roast = random.choice(content.DEV_CONTENT["dev_roast_messages"]) if final_score >= 70 else None
+
+        return {
+            "mode": "dev",
+            "final_score": final_score,
+            "cyber_sign": sign_data["sign"],
+            "cyber_sign_emoji": sign_data["emoji"],
+            "cyber_sign_description": sign_data["description"],
+            "dimensions": {
+                "secret_hygiene":        secret_label,
+                "dependency_health":     dep_label,
+                "environment_discipline": env_label,
+                "code_integrity":        integrity_label,
+                "error_exposure":        error_label,
+            },
+            "prophecies": {
+                "secrets":      random.choice(content.DEV_CONTENT["secret_prophecies"][secret_level]),
+                "dependencies": random.choice(content.DEV_CONTENT["dependency_prophecies"][dep_level]),
+                "environment":  random.choice(content.DEV_CONTENT["environment_prophecies"][env_level]),
+                "code":         random.choice(content.DEV_CONTENT["code_integrity_prophecies"][int_level]),
+                "errors":       random.choice(content.DEV_CONTENT["error_exposure_prophecies"][err_level]),
+                "daily":        random.choice(content.DEV_CONTENT["daily_dev_prophecies"]),
+            },
+            "lucky_security_charm":  random.choice(content.DEV_CONTENT["lucky_dev_charms"]),
+            "lucky_security_number": random.choice(content.DEV_CONTENT["lucky_dev_numbers"]),
+            "roast_message": roast,
+            "generated_at":  datetime.datetime.utcnow().isoformat() + "Z",
+        }
+
+# ─────────────────────────────────────────────
+# FILE: src/handler.py
+# ACTION: Add mode routing (3 lines added, nothing removed)
+# ─────────────────────────────────────────────
+handler_py:
+  change: ADD_MODE_ROUTING
+  location: after body parsing and validation, before calling engine.generate()
+  instruction: |
+    Current code (do not remove):
+      result = engine.generate(body["answers"])
+
+    Replace that single line with:
+      mode = body.get("mode", "user")   # "user" default = fully backward compatible
+      validation_error = validator.validate_answers(body.get("answers", {}), mode)
+      if validation_error:
+          return _response(400, {"error": "INVALID_ANSWERS", "message": validation_error, "status": 400})
+      
+      if mode == "dev":
+          result = engine.generate_dev(body["answers"])
+      else:
+          result = engine.generate(body["answers"])
+
+    NOTE: Also update the existing validate_answers call above to pass mode,
+    or consolidate into the single call shown above. Either approach is fine
+    as long as validate_answers is only called once with the correct mode.

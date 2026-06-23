@@ -1,0 +1,178 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  CyberHoroscope — Gamified cybersecurity awareness tool.
+  Serverless: Lambda + API Gateway (HTTP API) + S3 + CloudFront.
+
+# ─────────────────────────────────────────────
+# PARAMETERS
+# ─────────────────────────────────────────────
+Parameters:
+  Stage:
+    Type: String
+    Default: prod
+    AllowedValues:
+      - dev
+      - prod
+    Description: Deployment stage
+
+# ─────────────────────────────────────────────
+# GLOBALS
+# ─────────────────────────────────────────────
+Globals:
+  Function:
+    Runtime: python3.12
+    Architectures:
+      - arm64
+    Timeout: 10
+    MemorySize: 128
+    Tracing: Active
+    Environment:
+      Variables:
+        LOG_LEVEL: INFO
+        APP_VERSION: "1.0.0"
+
+# ─────────────────────────────────────────────
+# RESOURCES
+# ─────────────────────────────────────────────
+Resources:
+
+  # ── Lambda Function ──────────────────────────
+  CyberHoroscopeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "CyberHoroscopeFunction-${Stage}"
+      CodeUri: src/
+      Handler: handler.lambda_handler
+      Description: Scores quiz answers and returns a personalised cyber horoscope
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Events:
+        PostHoroscope:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CyberHoroscopeHttpApi
+            Path: /horoscope
+            Method: POST
+        GetHealth:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CyberHoroscopeHttpApi
+            Path: /health
+            Method: GET
+
+  # ── HTTP API (API Gateway v2) ────────────────
+  CyberHoroscopeHttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: !Ref Stage
+      Description: CyberHoroscope HTTP API
+      CorsConfiguration:
+        AllowOrigins:
+          - "*"
+        AllowMethods:
+          - POST
+          - GET
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+          - X-Amz-Date
+          - Authorization
+          - X-Api-Key
+        MaxAge: 300
+
+  # ── S3 Bucket for Frontend ───────────────────
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "cyber-horoscope-frontend-${AWS::AccountId}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Suspended
+
+  # ── CloudFront Origin Access Control ─────────
+  FrontendOAC:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub "CyberHoroscopeOAC-${AWS::AccountId}"
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  # ── CloudFront Distribution ──────────────────
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: CyberHoroscope Frontend Distribution
+        Enabled: true
+        DefaultRootObject: index.html
+        PriceClass: PriceClass_100
+        HttpVersion: http2
+        Origins:
+          - Id: S3Origin
+            DomainName: !GetAtt FrontendBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt FrontendOAC.Id
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6  # CachingOptimized
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          CachedMethods:
+            - GET
+            - HEAD
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+
+  # ── S3 Bucket Policy (allow CloudFront OAC) ──
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowCloudFrontServicePrincipal
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub "${FrontendBucket.Arn}/*"
+            Condition:
+              StringEquals:
+                "AWS:SourceArn": !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}"
+
+# ─────────────────────────────────────────────
+# OUTPUTS
+# ─────────────────────────────────────────────
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway base URL (use this as API_ENDPOINT in frontend)
+    Value: !Sub "https://${CyberHoroscopeHttpApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}"
+
+  FrontendURL:
+    Description: CloudFront URL for the frontend
+    Value: !Sub "https://${CloudFrontDistribution.DomainName}"
+
+  BucketName:
+    Description: S3 bucket name for frontend deployment
+    Value: !Ref FrontendBucket
+
+  LambdaFunctionArn:
+    Description: Lambda function ARN
+    Value: !GetAtt CyberHoroscopeFunction.Arn
